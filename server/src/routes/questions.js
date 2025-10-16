@@ -1,81 +1,77 @@
 import express from "express";
-import fs from "fs";
-import path from "path";
+import pool from "../db.js";
 
 const router = express.Router();
 
-router.get("/", (req, res) => {
+router.get("/", async (req, res) => {
   try {
-    
-    const filePath = path.resolve("data/questions.json");
-    
-    const fileData = fs.readFileSync(filePath, "utf8");
-    const questions = JSON.parse(fileData);
-    
+    const result = await pool.query(
+      "SELECT id, category, question, difficulty, context, tags, key_themes, estimated_response_time, is_active FROM questions WHERE is_active = TRUE ORDER BY id"
+    );
     res.status(200).json({
       message: "Questions loaded successfully",
-      total: questions.questions.length,
-      data: questions.questions
+      total: result.rows.length,
+      data: result.rows,
     });
   } catch (err) {
-    console.error("Error reading questions.json:", err);
-    res.status(500).json({ message: "Failed to load questions file" });
+    console.error("Error fetching questions from database:", err);
+    res.status(500).json({ message: "Failed to load questions" });
   }
 });
 
-router.get("/:id", (req, res) => {
+router.get("/:id", async (req, res) => {
   try {
     const questionId = parseInt(req.params.id, 10);
     if (isNaN(questionId)) {
       return res.status(400).json({ message: "Invalid question ID" });
     }
-    const filePath = path.resolve("data/questions.json");
-    const fileData = fs.readFileSync(filePath, "utf8");
-    const questions = JSON.parse(fileData);
-    const question = questions.questions.find(q => q.id === questionId);
-    if (!question) {
+
+    const result = await pool.query(
+      "SELECT id, category, question, difficulty, context, tags, key_themes, estimated_response_time FROM questions WHERE id = $1",
+      [questionId]
+    );
+
+    if (result.rows.length === 0) {
       return res.status(404).json({ message: "Question not found" });
     }
+
     res.status(200).json({
       message: "Question loaded successfully",
-      data: question
+      data: result.rows[0]
     });
-}
-
-
-
-
-catch (err) {
-    console.error("Error reading questions.json:", err);
-    res.status(500).json({ message: "Failed to load questions file" });
+  } catch (err) {
+    console.error("Error fetching question by ID:", err);
+    res.status(500).json({ message: "Failed to load question" });
   }
 });
 
-
-
-router.get("/:id/personas", (req, res) => {
+router.get("/:id/personas", async (req, res) => {
   try {
     const questionId = parseInt(req.params.id, 10);
     if (isNaN(questionId)) {
       return res.status(400).json({ message: "Invalid question ID" });
-    }    
-    const filePath = path.resolve("data/questions.json");
-    const fileData = fs.readFileSync(filePath, "utf8");
-    const questions = JSON.parse(fileData);    
-    const question = questions.questions.find(q => q.id === questionId);
-    if (!question) {
-      return res.status(404).json({ message: "Question not found" });
-    }   
+    }
+
+    const result = await pool.query(
+      "SELECT persona_id FROM question_personas WHERE question_id = $1",
+      [questionId]
+    );
+
+    if (result.rows.length === 0) {
+      return res.status(404).json({ message: "No personas found for this question" });
+    }
+
+    
+    const personaIds = result.rows.map(r => r.persona_id);
+
     res.status(200).json({
       message: "Persona IDs retrieved successfully",
-      personas: question.persona  
+      personas: personaIds
     });
   } catch (err) {
-    console.error("Error loading question personas:", err);
+    console.error("Error fetching personas for question:", err);
     res.status(500).json({ message: "Failed to load question personas" });
   }
 });
-
-
 
 export default router;

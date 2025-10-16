@@ -1,4 +1,4 @@
-import { verifyToken } from "../middleware/auth.js";
+import { verifyToken } from "../middleware/authValidate.js";
 import pool from "../db.js";
 import express from "express";
 const router = express.Router();
