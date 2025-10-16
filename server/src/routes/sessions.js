@@ -1,46 +1,46 @@
-import express from 'express';
+import express from "express";
 import pool from "../db/config.js";
-import authenticate from '../routes/auth.js';
+import { verifyToken } from "../middleware/authValidate.js";
 
 const router = express.Router();
-router.use(authenticate);
 
-// Create new practice session
-router.post('/', async (req, res) => {
+
+router.post("/", verifyToken, async (req, res) => {
   const { questionId, personaId } = req.body;
-  
+   const userId = req.user.userId;
+  console.log("Create session request:", req.user);
+
   try {
     if (!questionId || !personaId) {
-      return res.status(400).json({ error: 'Question ID and Persona ID required' });
+      return res
+        .status(400)
+        .json({ error: "Question ID and Persona ID required" });
     }
 
-    // Verify question exists
     const questionCheck = await pool.query(
-      'SELECT id, question, category FROM questions WHERE id = $1',
+      "SELECT id, question, category FROM questions WHERE id = $1",
       [questionId]
     );
 
     if (questionCheck.rows.length === 0) {
-      return res.status(404).json({ error: 'Question not found' });
+      return res.status(404).json({ error: "Question not found" });
     }
 
-    // Verify persona exists
     const personaCheck = await pool.query(
-      'SELECT id, name FROM personas WHERE id = $1',
+      "SELECT id, name FROM personas WHERE id = $1",
       [personaId]
     );
 
     if (personaCheck.rows.length === 0) {
-      return res.status(404).json({ error: 'Persona not found' });
+      return res.status(404).json({ error: "Persona not found" });
     }
 
-    // Create session
     const result = await pool.query(
       `INSERT INTO practice_sessions 
        (user_id, question_id, persona_id, started_at)
        VALUES ($1, $2, $3, NOW())
        RETURNING *`,
-      [req.userId, questionId, personaId]
+      [userId, questionId, personaId]
     );
 
     const session = result.rows[0];
@@ -48,23 +48,22 @@ router.post('/', async (req, res) => {
     const persona = personaCheck.rows[0];
 
     res.status(201).json({
-      message: 'Practice session created',
+      message: "Practice session created",
       session: {
         ...session,
         question: question.question,
         category: question.category,
         persona_name: persona.name,
-      }
+      },
     });
-
   } catch (error) {
-    console.error('Create session error:', error);
-    res.status(500).json({ error: 'Error creating session' });
+    console.error("Create session error:", error);
+    res.status(500).json({ error: "Error creating session" });
   }
 });
 
-// Get all sessions
-router.get('/', async (req, res) => {
+router.get("/",verifyToken, async (req, res) => {
+  const userId = req.user.userId;
   try {
     const result = await pool.query(
       `SELECT 
@@ -89,22 +88,21 @@ router.get('/', async (req, res) => {
        WHERE ps.user_id = $1 
        ORDER BY ps.created_at DESC
        LIMIT 50`,
-      [req.userId]
+      [userId]
     );
-    
-    res.json({ 
-      sessions: result.rows,
-      total: result.rows.length
-    });
 
+    res.json({
+      sessions: result.rows,
+      total: result.rows.length,
+    });
   } catch (error) {
-    console.error('Get sessions error:', error);
-    res.status(500).json({ error: 'Error fetching sessions' });
+    console.error("Get sessions error:", error);
+    res.status(500).json({ error: "Error fetching sessions" });
   }
 });
 
-// Get single session
-router.get('/:id', async (req, res) => {
+
+router.get("/:id",verifyToken, async (req, res) => {
   try {
     const { id } = req.params;
 
@@ -125,28 +123,27 @@ router.get('/:id', async (req, res) => {
     );
 
     if (result.rows.length === 0) {
-      return res.status(404).json({ error: 'Session not found' });
+      return res.status(404).json({ error: "Session not found" });
     }
 
     res.json({ session: result.rows[0] });
-
   } catch (error) {
-    console.error('Get session error:', error);
-    res.status(500).json({ error: 'Error fetching session' });
+    console.error("Get session error:", error);
+    res.status(500).json({ error: "Error fetching session" });
   }
 });
 
-// Complete session
-router.patch('/:id/complete', async (req, res) => {
+
+router.patch("/:id/complete",verifyToken, async (req, res) => {
   const { id } = req.params;
-  const { 
-    confidenceRating, 
+  const {
+    confidenceRating,
     responseQualityRating,
-    userNotes, 
+    userNotes,
     recordingText,
-    recordingDurationSeconds
+    recordingDurationSeconds,
   } = req.body;
-  
+
   try {
     const result = await pool.query(
       `UPDATE practice_sessions 
@@ -160,37 +157,36 @@ router.patch('/:id/complete', async (req, res) => {
        WHERE id = $6 AND user_id = $7
        RETURNING *`,
       [
-        confidenceRating, 
+        confidenceRating,
         responseQualityRating,
-        userNotes, 
+        userNotes,
         recordingText,
         recordingDurationSeconds,
-        id, 
-        req.userId
+        id,
+        req.userId,
       ]
     );
 
     if (result.rows.length === 0) {
-      return res.status(404).json({ error: 'Session not found' });
+      return res.status(404).json({ error: "Session not found" });
     }
 
     res.json({
-      message: 'Session completed successfully',
-      session: result.rows[0]
+      message: "Session completed successfully",
+      session: result.rows[0],
     });
-
   } catch (error) {
-    console.error('Complete session error:', error);
-    res.status(500).json({ error: 'Error completing session' });
+    console.error("Complete session error:", error);
+    res.status(500).json({ error: "Error completing session" });
   }
 });
 
-// Get user statistics
-router.get('/stats', async (req, res) => {
+
+router.get("/stats", async (req, res) => {
   try {
     // Total sessions
     const totalResult = await pool.query(
-      'SELECT COUNT(*) as total FROM practice_sessions WHERE user_id = $1',
+      "SELECT COUNT(*) as total FROM practice_sessions WHERE user_id = $1",
       [req.userId]
     );
 
@@ -201,7 +197,7 @@ router.get('/stats', async (req, res) => {
        WHERE user_id = $1 AND completed_at IS NOT NULL`,
       [req.userId]
     );
-    
+
     // Average confidence
     const avgResult = await pool.query(
       `SELECT AVG(confidence_rating)::numeric(10,2) as avg_confidence 
@@ -209,7 +205,7 @@ router.get('/stats', async (req, res) => {
        WHERE user_id = $1 AND completed_at IS NOT NULL AND confidence_rating IS NOT NULL`,
       [req.userId]
     );
-    
+
     // Category breakdown
     const categoryResult = await pool.query(
       `SELECT 
@@ -237,7 +233,7 @@ router.get('/stats', async (req, res) => {
        GROUP BY ps.persona_id, p.name`,
       [req.userId]
     );
-    
+
     // Calculate streak
     const streakResult = await pool.query(
       `SELECT DISTINCT DATE(completed_at) as date 
@@ -246,19 +242,19 @@ router.get('/stats', async (req, res) => {
        ORDER BY date DESC`,
       [req.userId]
     );
-    
+
     let currentStreak = 0;
-    const dates = streakResult.rows.map(r => r.date);
-    
+    const dates = streakResult.rows.map((r) => r.date);
+
     if (dates.length > 0) {
       const today = new Date();
       today.setHours(0, 0, 0, 0);
       let checkDate = new Date(today);
-      
+
       for (const dateStr of dates) {
         const sessionDate = new Date(dateStr);
         sessionDate.setHours(0, 0, 0, 0);
-        
+
         if (sessionDate.getTime() === checkDate.getTime()) {
           currentStreak++;
           checkDate.setDate(checkDate.getDate() - 1);
@@ -275,44 +271,44 @@ router.get('/stats', async (req, res) => {
        WHERE user_id = $1 AND completed_at IS NOT NULL`,
       [req.userId]
     );
-    
+
     res.json({
       totalSessions: parseInt(totalResult.rows[0].total),
       completedSessions: parseInt(completedResult.rows[0].completed),
-      inProgressSessions: parseInt(totalResult.rows[0].total) - parseInt(completedResult.rows[0].completed),
+      inProgressSessions:
+        parseInt(totalResult.rows[0].total) -
+        parseInt(completedResult.rows[0].completed),
       avgConfidence: parseFloat(avgResult.rows[0].avg_confidence || 0),
       currentStreak,
       lastPracticeDate: dates[0] || null,
       totalPracticeTimeSeconds: timeResult.rows[0].total_seconds || 0,
       categoryBreakdown: categoryResult.rows,
-      personaBreakdown: personaResult.rows
+      personaBreakdown: personaResult.rows,
     });
-    
   } catch (error) {
-    console.error('Get stats error:', error);
-    res.status(500).json({ error: 'Error fetching statistics' });
+    console.error("Get stats error:", error);
+    res.status(500).json({ error: "Error fetching statistics" });
   }
 });
 
 // Delete session
-router.delete('/:id', async (req, res) => {
+router.delete("/:id", async (req, res) => {
   try {
     const { id } = req.params;
 
     const result = await pool.query(
-      'DELETE FROM practice_sessions WHERE id = $1 AND user_id = $2 RETURNING id',
+      "DELETE FROM practice_sessions WHERE id = $1 AND user_id = $2 RETURNING id",
       [id, req.userId]
     );
 
     if (result.rows.length === 0) {
-      return res.status(404).json({ error: 'Session not found' });
+      return res.status(404).json({ error: "Session not found" });
     }
 
-    res.json({ message: 'Session deleted successfully' });
-
+    res.json({ message: "Session deleted successfully" });
   } catch (error) {
-    console.error('Delete session error:', error);
-    res.status(500).json({ error: 'Error deleting session' });
+    console.error("Delete session error:", error);
+    res.status(500).json({ error: "Error deleting session" });
   }
 });
 
