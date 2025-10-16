@@ -11,7 +11,7 @@ import dataRoutes from "./routes/data.js";
 import goalsRoutes from "./routes/goals.js";
 import responsesRoutes from "./routes/responses.js";
 import conversationRoutes from "./routes/conversations.js";
-// import pool from "./routes/db.js";
+import pool from './db/config.js';
 
 dotenv.config();
 
