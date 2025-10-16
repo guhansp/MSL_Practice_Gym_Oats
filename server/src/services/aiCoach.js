@@ -1,6 +1,6 @@
 // services/aiCoach.js
 import Anthropic from '@anthropic-ai/sdk';
-import pool from "../db.js";
+import pool from "../db/config.js";
 
 const anthropic = new Anthropic({
   apiKey: process.env.ANTHROPIC_API_KEY,
@@ -32,7 +32,11 @@ export async function generateCoachResponse(sessionId, userId, userMessage) {
       [sessionId, userId]
     );
 
+    console.log("After fetching sessionResult")
+    console.log(sessionResult)
+
     if (sessionResult.rows.length === 0) {
+      console.log("Session not found")
       throw new Error('Session not found');
     }
 
@@ -46,6 +50,9 @@ export async function generateCoachResponse(sessionId, userId, userMessage) {
        ORDER BY turn_number ASC`,
       [sessionId]
     );
+
+    console.log("After fetching historyResult")
+    console.log(historyResult)
 
     const conversationHistory = historyResult.rows;
 
