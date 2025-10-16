@@ -1,4 +1,3 @@
-// routes/conversation.js
 import express from 'express';
 import authenticate from '../routes/auth.js';
 import {
