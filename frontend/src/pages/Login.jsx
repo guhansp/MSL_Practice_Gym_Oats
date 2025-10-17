@@ -36,8 +36,8 @@ export default function SignIn() {
       <Navbar />
 
       <section
-        className="min-h-[85vh] bg-grayAccent flex flex-col items-center justify-center font-sans px-4"
-        style={{
+    className="min-h-[85vh] bg-grayAccent flex flex-col items-center justify-center font-sans px-4"
+      style={{
           backgroundImage: `url(${pattern})`,
           backgroundRepeat: "repeat",
           backgroundSize: "contain",
@@ -139,7 +139,7 @@ export default function SignIn() {
           <p className="text-sm text-center text-graphite">
             Don't have an account?{" "}
             <a
-              href="/signup"
+              href="/sign-up"
               className="text-primary hover:text-indigo font-medium"
             >
               Sign Up
