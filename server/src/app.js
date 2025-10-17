@@ -9,6 +9,7 @@ import dataRoutes from "./routes/data.js";
 import goalsRoutes from "./routes/goals.js";
 import responsesRoutes from "./routes/responses.js";
 import conversationRoutes from "./routes/conversations.js";
+import analyticsRoutes from "./routes/analytics.js";
 
 dotenv.config();
 
@@ -43,6 +44,7 @@ app.use("/api/responses", responsesRoutes);
 app.use("/api/conversation", conversationRoutes);
 app.use("/api/dashboard", dashboardRoutes);
 app.use("/api/questions", questionsRoutes);
+app.use("/api/analytics", analyticsRoutes); 
 
 
 const PORT = process.env.PORT || 5000;
