@@ -1,11 +1,11 @@
-import { verifyToken } from "../middleware/auth.js";
+import { verifyToken } from "../middleware/authValidate.js";
 import pool from '../db/config.js';
 import express from "express";
 const router = express.Router();
 
-router.get("/userData", verifyToken, async (req, res) => {
+router.get("/userData", verifyToken, async (req, res) => {  
   try {
-    const userId = req.user.user_id;
+    const userId = req.user.userId;
     console.log("Fetching dashboard for user ID:", userId);
 
     const result = await pool.query(

@@ -2,7 +2,7 @@ import express from 'express';
 import bcrypt from 'bcrypt';
 import jwt from 'jsonwebtoken';
 import pool from '../db/config.js';
-import { verifyToken as authenticate } from '../middleware/auth.js';
+import { verifyToken as authenticate } from '../middleware/authValidate.js';
 
 const router = express.Router();
 
@@ -10,7 +10,7 @@ const router = express.Router();
 // SIGN UP - Create new user account
 // ==========================================
 router.post('/signup', async (req, res) => {
-  const { email, password, firstName, lastName, organization } = req.body;
+  const { email, password, first_name, last_name, organization } = req.body;
   
   try {
     // Validation
@@ -60,8 +60,8 @@ router.post('/signup', async (req, res) => {
       [
         email.toLowerCase().trim(), 
         passwordHash, 
-        firstName || null, 
-        lastName || null,
+        first_name || null, 
+        last_name || null,
         organization || null
       ]
     );
@@ -161,6 +161,7 @@ router.post('/login', async (req, res) => {
       process.env.JWT_SECRET,
       { expiresIn: '7d' }
     );
+
     
     // Send success response
     res.json({

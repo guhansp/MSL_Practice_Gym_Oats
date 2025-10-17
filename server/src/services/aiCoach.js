@@ -1,17 +1,34 @@
-// services/aiCoach.js
-import Anthropic from '@anthropic-ai/sdk';
+// src/services/aiCoach.js
+import OpenAI from "openai";
 import pool from "../db/config.js";
 
-const anthropic = new Anthropic({
-  apiKey: process.env.ANTHROPIC_API_KEY,
+const openai = new OpenAI({
+  apiKey: process.env.OPENAI_API_KEY,
 });
 
-/**
- * Generate AI coach response
- */
+// --- Utilities ---------------------------------------------------------------
+
+function assertEnv() {
+  if (!process.env.OPENAI_API_KEY) {
+    throw new Error("OPENAI_API_KEY is missing. Add it to your .env");
+  }
+}
+
+function safeTextFromResponse(resp) {
+  // v6 Responses API convenience property first:
+  if (resp?.output_text) return resp.output_text;
+  // fallback to raw array structure:
+  return resp?.output?.[0]?.content?.[0]?.text ?? "(No response)";
+}
+
+// --- Core: Generate AI turn --------------------------------------------------
+
 export async function generateCoachResponse(sessionId, userId, userMessage) {
+  assertEnv();
+  console.log("Generating coach response for session:", sessionId, "user:", userId);
+
   try {
-    // Get session details
+    // 1) Load session with question + persona
     const sessionResult = await pool.query(
       `SELECT 
          ps.*,
@@ -32,17 +49,12 @@ export async function generateCoachResponse(sessionId, userId, userMessage) {
       [sessionId, userId]
     );
 
-    console.log("After fetching sessionResult")
-    console.log(sessionResult)
-
     if (sessionResult.rows.length === 0) {
-      console.log("Session not found")
-      throw new Error('Session not found');
+      throw new Error("Session not found");
     }
-
     const session = sessionResult.rows[0];
 
-    // Get conversation history
+    // 2) Conversation history
     const historyResult = await pool.query(
       `SELECT speaker, message, turn_number 
        FROM conversation_turns 
@@ -50,39 +62,34 @@ export async function generateCoachResponse(sessionId, userId, userMessage) {
        ORDER BY turn_number ASC`,
       [sessionId]
     );
-
-    console.log("After fetching historyResult")
-    console.log(historyResult)
-
     const conversationHistory = historyResult.rows;
 
-    // Build system prompt
+    // 3) Prompts
     const systemPrompt = buildSystemPrompt(session);
+    const messages = buildChatMessages(conversationHistory, userMessage); // [{role, content}]
 
-    // Build messages for Claude
-    const messages = buildClaudeMessages(conversationHistory, userMessage);
-
-    // Call Claude API
-    const response = await anthropic.messages.create({
-      model: 'claude-sonnet-4-20250514',
-      max_tokens: 1000,
-      system: systemPrompt,
-      messages: messages,
+    // 4) OpenAI v6 Responses API
+    const resp = await openai.responses.create({
+      model: "gpt-4o-mini",
+      input: [
+        { role: "system", content: systemPrompt },
+        ...messages,
+      ],
+      temperature: 0.7,
+      max_output_tokens: 1000,
     });
 
-    const aiMessage = response.content[0].text;
+    const aiMessage = safeTextFromResponse(resp);
 
-    // Save conversation turns
+    // 5) Persist turns (user + ai)
     const currentTurn = conversationHistory.length;
 
-    // Save user message
     await pool.query(
       `INSERT INTO conversation_turns (session_id, turn_number, speaker, message)
        VALUES ($1, $2, 'user', $3)`,
       [sessionId, currentTurn + 1, userMessage]
     );
 
-    // Save AI response
     await pool.query(
       `INSERT INTO conversation_turns (session_id, turn_number, speaker, message)
        VALUES ($1, $2, 'ai', $3)`,
@@ -96,14 +103,13 @@ export async function generateCoachResponse(sessionId, userId, userMessage) {
     };
 
   } catch (error) {
-    console.error('AI Coach error:', error);
+    console.error("AI Coach error:", error);
     throw error;
   }
 }
 
-/**
- * Build system prompt
- */
+// --- Helper: System Prompt ---------------------------------------------------
+
 function buildSystemPrompt(session) {
   const persona = {
     name: session.persona_name,
@@ -165,30 +171,20 @@ Only after substantial back-and-forth, provide constructive feedback:
 Stay in character as ${persona.name}. Be conversational, not robotic. Push back like a real physician. Make them work for it. Keep responses concise (2-4 sentences per turn).`;
 }
 
-/**
- * Build Claude messages array
- */
-function buildClaudeMessages(conversationHistory, newUserMessage) {
-  const messages = [];
+// --- Helper: Build messages from DB transcript ------------------------------
 
-  conversationHistory.forEach((turn) => {
-    messages.push({
-      role: turn.speaker === 'user' ? 'user' : 'assistant',
-      content: turn.message,
-    });
-  });
+function buildChatMessages(conversationHistory, newUserMessage) {
+  const msgs = conversationHistory.map((turn) => ({
+    role: turn.speaker === "user" ? "user" : "assistant",
+    content: turn.message,
+  }));
 
-  messages.push({
-    role: 'user',
-    content: newUserMessage,
-  });
-
-  return messages;
+  msgs.push({ role: "user", content: newUserMessage });
+  return msgs;
 }
 
-/**
- * Get conversation summary
- */
+// --- Read-only: Get conversation transcript ---------------------------------
+
 export async function getConversationSummary(sessionId, userId) {
   try {
     const result = await pool.query(
@@ -211,28 +207,26 @@ export async function getConversationSummary(sessionId, userId) {
     };
 
   } catch (error) {
-    console.error('Get conversation summary error:', error);
+    console.error("Get conversation summary error:", error);
     throw error;
   }
 }
 
-/**
- * Generate conversation feedback
- */
+// --- Generate final feedback summary ----------------------------------------
+
 export async function generateConversationFeedback(sessionId, userId) {
+  assertEnv();
+
   try {
     const summary = await getConversationSummary(sessionId, userId);
-
     if (summary.turns.length === 0) {
-      return { feedback: 'No conversation to analyze yet.' };
+      return { feedback: "No conversation to analyze yet." };
     }
 
-    // Build transcript
     const transcript = summary.turns
       .map((turn) => `${turn.speaker.toUpperCase()}: ${turn.message}`)
-      .join('\n\n');
+      .join("\n\n");
 
-    // Get session details
     const sessionResult = await pool.query(
       `SELECT q.question, p.name as persona_name
        FROM practice_sessions ps
@@ -242,17 +236,18 @@ export async function generateConversationFeedback(sessionId, userId) {
       [sessionId, userId]
     );
 
-    const question = sessionResult.rows[0]?.question || '';
-    const personaName = sessionResult.rows[0]?.persona_name || '';
+    const question = sessionResult.rows[0]?.question || "";
+    const personaName = sessionResult.rows[0]?.persona_name || "";
 
-    // Ask Claude to analyze
-    const response = await anthropic.messages.create({
-      model: 'claude-sonnet-4-20250514',
-      max_tokens: 1500,
-      system: `You are an expert MSL coach analyzing practice conversations. Provide constructive feedback.`,
-      messages: [
+    const resp = await openai.responses.create({
+      model: "gpt-4o-mini",
+      input: [
         {
-          role: 'user',
+          role: "system",
+          content: "You are an expert MSL coach analyzing practice conversations. Provide constructive feedback.",
+        },
+        {
+          role: "user",
           content: `Analyze this MSL practice conversation with ${personaName}.
 
 Original Question: "${question}"
@@ -281,11 +276,12 @@ Format as:
 **Summary:** [1-2 sentences]`,
         },
       ],
+      temperature: 0.7,
+      max_output_tokens: 1500,
     });
 
-    const feedback = response.content[0].text;
+    const feedback = safeTextFromResponse(resp);
 
-    // Save feedback
     await pool.query(
       `UPDATE practice_sessions 
        SET analysis_insights = jsonb_build_object('ai_feedback', $1)
@@ -296,7 +292,7 @@ Format as:
     return { feedback };
 
   } catch (error) {
-    console.error('Generate feedback error:', error);
+    console.error("Generate feedback error:", error);
     throw error;
   }
 }
