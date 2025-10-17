@@ -1,12 +1,9 @@
-// src/services/aiCoach.js
 import OpenAI from "openai";
 import pool from "../db/config.js";
 
 const openai = new OpenAI({
   apiKey: process.env.OPENAI_API_KEY,
 });
-
-// --- Utilities ---------------------------------------------------------------
 
 function assertEnv() {
   if (!process.env.OPENAI_API_KEY) {
@@ -15,20 +12,14 @@ function assertEnv() {
 }
 
 function safeTextFromResponse(resp) {
-  // v6 Responses API convenience property first:
   if (resp?.output_text) return resp.output_text;
-  // fallback to raw array structure:
+
   return resp?.output?.[0]?.content?.[0]?.text ?? "(No response)";
 }
 
-// --- Core: Generate AI turn --------------------------------------------------
-
 export async function generateCoachResponse(sessionId, userId, userMessage) {
   assertEnv();
-  console.log("Generating coach response for session:", sessionId, "user:", userId);
-
   try {
-    // 1) Load session with question + persona
     const sessionResult = await pool.query(
       `SELECT 
          ps.*,
@@ -54,7 +45,6 @@ export async function generateCoachResponse(sessionId, userId, userMessage) {
     }
     const session = sessionResult.rows[0];
 
-    // 2) Conversation history
     const historyResult = await pool.query(
       `SELECT speaker, message, turn_number 
        FROM conversation_turns 
@@ -64,24 +54,18 @@ export async function generateCoachResponse(sessionId, userId, userMessage) {
     );
     const conversationHistory = historyResult.rows;
 
-    // 3) Prompts
     const systemPrompt = buildSystemPrompt(session);
-    const messages = buildChatMessages(conversationHistory, userMessage); // [{role, content}]
+    const messages = buildChatMessages(conversationHistory, userMessage);
 
-    // 4) OpenAI v6 Responses API
     const resp = await openai.responses.create({
       model: "gpt-4o-mini",
-      input: [
-        { role: "system", content: systemPrompt },
-        ...messages,
-      ],
+      input: [{ role: "system", content: systemPrompt }, ...messages],
       temperature: 0.7,
       max_output_tokens: 1000,
     });
 
     const aiMessage = safeTextFromResponse(resp);
 
-    // 5) Persist turns (user + ai)
     const currentTurn = conversationHistory.length;
 
     await pool.query(
@@ -101,14 +85,11 @@ export async function generateCoachResponse(sessionId, userId, userMessage) {
       turnNumber: currentTurn + 2,
       conversationContinues: true,
     };
-
   } catch (error) {
     console.error("AI Coach error:", error);
     throw error;
   }
 }
-
-// --- Helper: System Prompt ---------------------------------------------------
 
 function buildSystemPrompt(session) {
   const persona = {
@@ -120,7 +101,9 @@ function buildSystemPrompt(session) {
     quote: session.quote,
   };
 
-  return `You are an AI coach helping Medical Science Liaisons (MSLs) practice difficult physician conversations. You are simulating ${persona.name}, a ${persona.specialty} specialist.
+  return `You are an AI coach helping Medical Science Liaisons (MSLs) practice difficult physician conversations. You are simulating ${
+    persona.name
+  }, a ${persona.specialty} specialist.
 
 # Your Role
 You are NOT here to give direct answers. Instead, you should:
@@ -168,10 +151,10 @@ Only after substantial back-and-forth, provide constructive feedback:
 - Point out improvements
 - Suggest alternative approaches
 
-Stay in character as ${persona.name}. Be conversational, not robotic. Push back like a real physician. Make them work for it. Keep responses concise (2-4 sentences per turn).`;
+Stay in character as ${
+    persona.name
+  }. Be conversational, not robotic. Push back like a real physician. Make them work for it. Keep responses concise (2-4 sentences per turn).`;
 }
-
-// --- Helper: Build messages from DB transcript ------------------------------
 
 function buildChatMessages(conversationHistory, newUserMessage) {
   const msgs = conversationHistory.map((turn) => ({
@@ -182,8 +165,6 @@ function buildChatMessages(conversationHistory, newUserMessage) {
   msgs.push({ role: "user", content: newUserMessage });
   return msgs;
 }
-
-// --- Read-only: Get conversation transcript ---------------------------------
 
 export async function getConversationSummary(sessionId, userId) {
   try {
@@ -205,19 +186,26 @@ export async function getConversationSummary(sessionId, userId) {
       turns: result.rows,
       totalTurns: result.rows.length,
     };
-
   } catch (error) {
     console.error("Get conversation summary error:", error);
     throw error;
   }
 }
 
-// --- Generate final feedback summary ----------------------------------------
-
 export async function generateConversationFeedback(sessionId, userId) {
   assertEnv();
+  console.log("Generating feedback for session:", sessionId, "user:", userId);
 
   try {
+    const sessionCheck = await pool.query(
+      `SELECT completed_at FROM practice_sessions WHERE id = $1 AND user_id = $2`,
+      [sessionId, userId]
+    );
+
+    if (sessionCheck.rows[0]?.completed_at) {
+      console.log("Session already completed. Skipping feedback generation.");
+      return { feedback: "This session has already been completed." };
+    }
     const summary = await getConversationSummary(sessionId, userId);
     if (summary.turns.length === 0) {
       return { feedback: "No conversation to analyze yet." };
@@ -232,7 +220,7 @@ export async function generateConversationFeedback(sessionId, userId) {
        FROM practice_sessions ps
        JOIN questions q ON ps.question_id = q.id
        JOIN personas p ON ps.persona_id = p.id
-       WHERE ps.id = $1 AND ps.user_id = $2`,
+       WHERE ps.id = $1 AND ps.user_id = $2 `,
       [sessionId, userId]
     );
 
@@ -244,7 +232,8 @@ export async function generateConversationFeedback(sessionId, userId) {
       input: [
         {
           role: "system",
-          content: "You are an expert MSL coach analyzing practice conversations. Provide constructive feedback.",
+          content:
+            "You are an expert MSL coach analyzing practice conversations. Provide constructive feedback.",
         },
         {
           role: "user",
@@ -284,13 +273,15 @@ Format as:
 
     await pool.query(
       `UPDATE practice_sessions 
-       SET analysis_insights = jsonb_build_object('ai_feedback', $1)
+      SET analysis_insights = $1,
+      completed_at = NOW()       
        WHERE id = $2 AND user_id = $3`,
       [feedback, sessionId, userId]
     );
 
-    return { feedback };
+    console.log("Feedback stored successfully.");
 
+    return { feedback };
   } catch (error) {
     console.error("Generate feedback error:", error);
     throw error;
