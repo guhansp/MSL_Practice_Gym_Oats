@@ -1,4 +1,4 @@
-import React from "react";
+import React, { useEffect, useState } from "react";
 import NavBar from "../components/NavBar";
 import {
   PieChart,
@@ -7,9 +7,28 @@ import {
   Tooltip,
   ResponsiveContainer,
 } from "recharts";
+import { fetchUserDashboard } from "../services/dashboardService";
 
 export default function Dashboard() {
-  const userName = "Ashmiya";
+  const [dashboardData, setDashboardData] = useState(null);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState("");
+
+  const userName = "Ashmiya"; // later replace with decoded user name from JWT
+
+  useEffect(() => {
+    const loadDashboard = async () => {
+      try {
+        const res = await fetchUserDashboard();
+        setDashboardData(res.progress);
+      } catch (err) {
+        setError(err.response?.data?.message || "Failed to load dashboard");
+      } finally {
+        setLoading(false);
+      }
+    };
+    loadDashboard();
+  }, []);
 
   const getColorClass = (score) => {
     if (score < 50) return "text-red-600";
@@ -23,35 +42,38 @@ export default function Dashboard() {
     return "bg-green-100 text-green-700";
   };
 
-  const scores = [
-    { id: 1, title: "Presentation Skills", score: 45 },
-    { id: 2, title: "Scientific Writing", score: 65 },
-    { id: 3, title: "Team Communication", score: 80 },
-    { id: 4, title: "Confidence in Meetings", score: 72 },
-    { id: 5, title: "Public Speaking", score: 90 },
-  ];
+  // Placeholder if API hasn’t returned yet
+  const scores =
+    dashboardData?.scores || [
+      { id: 1, title: "Presentation Skills", score: 45 },
+      { id: 2, title: "Scientific Writing", score: 65 },
+      { id: 3, title: "Team Communication", score: 80 },
+      { id: 4, title: "Confidence in Meetings", score: 72 },
+      { id: 5, title: "Public Speaking", score: 90 },
+    ];
 
-  const totalSessions = 42;
-  const totalMinutes = 560;
-  const currentStreak = 7;
+  const totalSessions = dashboardData?.total_sessions || 42;
+  const totalMinutes = dashboardData?.total_minutes || 560;
+  const currentStreak = dashboardData?.streak || 7;
 
- const confidenceData = [
-  { name: "Presentation", value: 45, color: "#0077E6" }, // Primary Blue
-  { name: "Writing", value: 65, color: "#00AEEF" }, // Sky Blue
-  { name: "Communication", value: 80, color: "#1B004B" }, // Deep Indigo
-  { name: "Meetings", value: 72, color: "#404A69" }, // Graphite
-  { name: "Public Speaking", value: 90, color: "#5AC8FA" }, // Lighter accent (optional)
-];
+  const confidenceData =
+    dashboardData?.confidence_data || [
+      { name: "Presentation", value: 45, color: "#0077E6" },
+      { name: "Writing", value: 65, color: "#00AEEF" },
+      { name: "Communication", value: 80, color: "#1B004B" },
+      { name: "Meetings", value: 72, color: "#404A69" },
+      { name: "Public Speaking", value: 90, color: "#5AC8FA" },
+    ];
 
-  const recentSessions = [
-    { date: "Oct 14, 2025", topic: "Scientific Writing", score: 75 },
-    { date: "Oct 13, 2025", topic: "Presentation Skills", score: 82 },
-    { date: "Oct 12, 2025", topic: "Confidence in Meetings", score: 65 },
-    { date: "Oct 10, 2025", topic: "Public Speaking", score: 88 },
-    { date: "Oct 9, 2025", topic: "Team Communication", score: 71 },
-  ];
+  const recentSessions =
+    dashboardData?.recent_sessions || [
+      { date: "Oct 14, 2025", topic: "Scientific Writing", score: 75 },
+      { date: "Oct 13, 2025", topic: "Presentation Skills", score: 82 },
+      { date: "Oct 12, 2025", topic: "Confidence in Meetings", score: 65 },
+      { date: "Oct 10, 2025", topic: "Public Speaking", score: 88 },
+      { date: "Oct 9, 2025", topic: "Team Communication", score: 71 },
+    ];
 
-  // --- Streak mock ---
   const streakData = Array.from({ length: 30 }, () =>
     Math.random() > 0.4 ? 1 : 0
   );
@@ -63,52 +85,48 @@ export default function Dashboard() {
       .map((s) => s.length)
   );
 
+  if (loading)
+    return (
+      <div className="min-h-screen flex items-center justify-center text-gray-500 font-medium">
+        Loading your dashboard...
+      </div>
+    );
+
+  if (error)
+    return (
+      <div className="min-h-screen flex items-center justify-center text-red-500 font-medium">
+        {error}
+      </div>
+    );
+
   return (
     <>
       <NavBar />
-
       <section className="min-h-screen bg-grayAccent px-6 py-10 font-sans">
-        {/* --- Welcome Header --- */}
         <h1 className="text-2xl md:text-3xl font-serif text-indigo font-medium mb-10">
           Welcome, <span className="text-primary">{userName}</span>
         </h1>
 
-        {/* --- Key Metrics Summary --- */}
+        {/* --- Summary Metrics --- */}
         <div className="grid grid-cols-1 sm:grid-cols-3 gap-6 mb-10">
-          <div className="bg-white rounded-xl shadow-md p-6 text-center">
-            <h3 className="text-sm text-graphite mb-2 font-medium">
-              Total Sessions Completed
-            </h3>
-            <p className="text-3xl font-bold text-primary">{totalSessions}</p>
-          </div>
-
-          <div className="bg-white rounded-xl shadow-md p-6 text-center">
-            <h3 className="text-sm text-graphite mb-2 font-medium">
-              Practice Time Logged
-            </h3>
-            <p className="text-3xl font-bold text-indigo">
-              {Math.floor(totalMinutes / 60)}h {totalMinutes % 60}m
-            </p>
-          </div>
-
-          <div className="bg-white rounded-xl shadow-md p-6 text-center">
-            <h3 className="text-sm text-graphite mb-2 font-medium">
-              Current Streak
-            </h3>
-            <p className="text-3xl font-bold text-green-600">
-              {currentStreak} Days 🔥
-            </p>
-          </div>
+          <MetricCard title="Total Sessions Completed" value={totalSessions} color="text-primary" />
+          <MetricCard
+            title="Practice Time Logged"
+            value={`${Math.floor(totalMinutes / 60)}h ${totalMinutes % 60}m`}
+            color="text-indigo"
+          />
+          <MetricCard
+            title="Current Streak"
+            value={`${currentStreak} Days 🔥`}
+            color="text-green-600"
+          />
         </div>
 
         {/* --- Confidence Cards --- */}
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-5 gap-6 mb-12">
           {scores.map((item) => {
-            const colorClass = getColorClass(item.score);
-            const chipClass = getChipColor(item.score);
             const label =
               item.score < 50 ? "Low" : item.score < 75 ? "Medium" : "High";
-
             return (
               <div
                 key={item.id}
@@ -116,22 +134,22 @@ export default function Dashboard() {
               >
                 <div className="flex justify-end mb-2">
                   <div
-                    className={`px-3 py-1 text-xs font-semibold rounded-full ${chipClass}`}
+                    className={`px-3 py-1 text-xs font-semibold rounded-full ${getChipColor(
+                      item.score
+                    )}`}
                   >
                     {label}
                   </div>
                 </div>
-
                 <h2 className="text-lg font-medium text-indigo mb-2">
                   {item.title}
                 </h2>
                 <p className="text-sm font-bold">
                   Confidence Score:{" "}
-                  <span className={`text-base ${colorClass}`}>
+                  <span className={`text-base ${getColorClass(item.score)}`}>
                     {item.score}%
                   </span>
                 </p>
-
                 <button className="mt-5 bg-primary hover:bg-indigo text-white px-4 py-2 rounded-lg font-medium text-sm transition-colors duration-300">
                   Practice Now
                 </button>
@@ -140,55 +158,54 @@ export default function Dashboard() {
           })}
         </div>
 
-        {/* --- Confidence by Category --- */}
-  <div className="bg-white rounded-2xl shadow-md p-6 md:p-8 mb-10">
-  <h2 className="font-serif text-xl md:text-2xl text-indigo font-medium mb-6">
-    Confidence by Category
-  </h2>
+        {/* --- Confidence by Category Chart --- */}
+        <div className="bg-white rounded-2xl shadow-md p-6 md:p-8 mb-10">
+          <h2 className="font-serif text-xl md:text-2xl text-indigo font-medium mb-6">
+            Confidence by Category
+          </h2>
+          <div className="h-72">
+            <ResponsiveContainer width="100%" height="100%">
+              <PieChart>
+                <Pie
+                  data={confidenceData}
+                  dataKey="value"
+                  nameKey="name"
+                  innerRadius="50%"
+                  outerRadius="80%"
+                  label={({ name, value }) => `${name}: ${value}%`}
+                  labelLine={false}
+                >
+                  {confidenceData.map((entry, index) => (
+                    <Cell key={`cell-${index}`} fill={entry.color} />
+                  ))}
+                </Pie>
+                <Tooltip
+                  contentStyle={{
+                    backgroundColor: "#ffffff",
+                    borderRadius: "10px",
+                    border: "1px solid #E5E7EB",
+                    color: "#1B004B",
+                  }}
+                />
+              </PieChart>
+            </ResponsiveContainer>
+          </div>
+        </div>
 
-  <div className="h-72">
-    <ResponsiveContainer width="100%" height="100%">
-      <PieChart>
-        <Pie
-          data={confidenceData}
-          dataKey="value"
-          nameKey="name"
-          innerRadius="50%"
-          outerRadius="80%"
-          label={({ name, value }) => `${name}: ${value}%`}
-          labelLine={false}
-        >
-          {confidenceData.map((entry, index) => (
-            <Cell key={`cell-${index}`} fill={entry.color} />
-          ))}
-        </Pie>
-        <Tooltip
-          contentStyle={{
-            backgroundColor: "#ffffff",
-            borderRadius: "10px",
-            border: "1px solid #E5E7EB",
-            color: "#1B004B",
-          }}
-        />
-      </PieChart>
-    </ResponsiveContainer>
-  </div>
-</div>
-
-
-        {/* --- Consistency + Heatmap --- */}
+        {/* --- Streak Heatmap --- */}
         <div className="bg-white shadow-md rounded-2xl p-6 md:p-8 max-w-5xl mx-auto mb-10">
           <h2 className="font-serif text-xl md:text-2xl text-indigo font-medium mb-4">
             Your Consistency Streak
           </h2>
           <p className="text-graphite mb-6">
             You've completed{" "}
-            <span className="font-semibold text-primary">{sessionsCompleted}</span>{" "}
+            <span className="font-semibold text-primary">
+              {sessionsCompleted}
+            </span>{" "}
             sessions this month. Longest streak:{" "}
             <span className="font-semibold text-primary">{longestStreak}</span>{" "}
             days in a row.
           </p>
-
           <div className="flex flex-wrap gap-1">
             {streakData.map((day, i) => (
               <div
@@ -233,5 +250,15 @@ export default function Dashboard() {
         </div>
       </section>
     </>
+  );
+}
+
+// Small reusable component for cleaner layout
+function MetricCard({ title, value, color }) {
+  return (
+    <div className="bg-white rounded-xl shadow-md p-6 text-center">
+      <h3 className="text-sm text-graphite mb-2 font-medium">{title}</h3>
+      <p className={`text-3xl font-bold ${color}`}>{value}</p>
+    </div>
   );
 }

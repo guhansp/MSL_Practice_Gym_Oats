@@ -19,7 +19,7 @@ function App() {
         <Route path="/reset-confirmation" element={<ResetConfirmation />} />
         <Route path="/reset-password" element={<ResetPassword />} />
         <Route path="/dashboard" element={<Dashboard />} />
-          <Route path="/questions" element={<QuestionSelection />} />
+        <Route path="/questions" element={<QuestionSelection />} />
       </Routes>
     </Router>
   );
