@@ -17,6 +17,7 @@ import {
   Line,
   Rectangle,
 } from "recharts";
+import pattern from "../assets/Pattern_Dot.png";
 import { Flame } from "lucide-react";
 import {
   fetchUserDashboard,
@@ -266,28 +267,41 @@ export default function Dashboard() {
         </div>
 
         {/* Persona Scores */}
-        {/* --- Explore Personas CTA --- */}
-        <div className="mb-10">
-          <div className="bg-white rounded-xl shadow-md p-6 border-l-4 border-primary">
-            <div className="flex items-start sm:items-center justify-between flex-col sm:flex-row gap-4">
-              <div className="flex-1">
-                <h3 className="font-serif text-lg sm:text-xl text-primary font-medium mb-2">
-                  Ready to Learn Physician Communication Styles?
-                </h3>
-                <p className="text-graphite text-xs sm:text-sm">
-                  Master the communication styles and priorities of oncologists,
-                  cardiologists, and neurologists
-                </p>
-              </div>
-              <button
-                onClick={() => navigate("/personas")}
-                className="w-full sm:w-auto bg-primary hover:bg-primary/90 text-white font-medium px-6 py-3 rounded-lg transition-colors duration-300 whitespace-nowrap"
-              >
-                Explore Now
-              </button>
-            </div>
-          </div>
+{/* --- Explore Personas CTA (Centered) --- */}
+<div className="w-full py-10 flex justify-center mb-10"
+   style={{
+      backgroundImage: `url(${pattern})`,
+      backgroundRepeat: "repeat",
+      backgroundSize: "contain",
+      backgroundPosition: "center",
+    }}>
+  <div
+    className="p-[2px] rounded-xl shadow-md w-full max-w-3xl"
+  >
+    <div className="bg-white/90 rounded-xl p-6 border-l-4 border-primary backdrop-blur-sm">
+      <div className="flex items-start sm:items-center justify-between flex-col sm:flex-row gap-4">
+        <div className="flex-1">
+          <h3 className="font-serif text-lg sm:text-xl text-primary font-medium mb-2">
+            Ready to Learn Physician Communication Styles?
+          </h3>
+          <p className="text-graphite text-xs sm:text-sm">
+            Master the communication styles and priorities of oncologists,
+            cardiologists, and neurologists
+          </p>
         </div>
+        <button
+          onClick={() => navigate("/personas")}
+          className="w-full sm:w-auto bg-primary hover:bg-primary/90 text-white font-medium px-6 py-3 rounded-lg transition-colors duration-300 whitespace-nowrap"
+        >
+          Explore Now
+        </button>
+      </div>
+    </div>
+  </div>
+</div>
+
+
+
 
         {/* --- Confidence Cards --- */}
         {/* <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-5 gap-6 mb-12"/> */}
@@ -418,7 +432,7 @@ export default function Dashboard() {
         )}
 
         {/* Confidence Trend */}
-        <div className="bg-white shadow-md rounded-2xl p-6 md:p-8 w-full mb-10">
+        {/* <div className="bg-white shadow-md rounded-2xl p-6 md:p-8 w-full mb-10">
           <div className="flex flex-wrap items-center justify-between mb-6">
             <h2 className="font-serif text-xl md:text-2xl text-indigo font-medium">
               Confidence Trend (0–5 Scale)
@@ -471,7 +485,7 @@ export default function Dashboard() {
               ))}
             </div>
           </div>
-        </div>
+        </div> */}
 
         {/* Performance Comparison (Composite Chart 0–5 Scale) */}
         <div className="bg-white rounded-2xl shadow-md p-6 md:p-8 mb-10 w-full">
@@ -525,7 +539,7 @@ export default function Dashboard() {
         </div>
 
         {/* Goal Achievement */}
-        <div className="bg-white rounded-2xl shadow-md p-6 md:p-8 mb-16 w-full text-center">
+        {/* <div className="bg-white rounded-2xl shadow-md p-6 md:p-8 mb-16 w-full text-center">
           <h2 className="font-serif text-xl md:text-2xl text-indigo font-medium mb-6">
             Goal Achievement Tracking
           </h2>
@@ -552,7 +566,7 @@ export default function Dashboard() {
                 : "Keep going — you're almost there!"}
             </p>
           </div>
-        </div>
+        </div> */}
 
         {/* Session History */}
         <div className="bg-white rounded-2xl shadow-md p-6 md:p-8 w-full mb-16">

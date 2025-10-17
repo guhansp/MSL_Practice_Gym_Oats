@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from "react";
 import { useParams, useNavigate } from "react-router-dom";
 import NavBar from "../components/NavBar";
+import pattern from "../assets/Pattern_Dot.png";
 import { getPersonaById } from "../services/personaService";
 
 export default function PersonaDetailPage() {
@@ -135,31 +136,42 @@ export default function PersonaDetailPage() {
           ← Back to All Personas
         </button>
 
-        {/* Header */}
-        <div className="bg-white rounded-2xl shadow-md p-8 mb-8 border-t-4 border-primary">
-          <h1 className="text-3xl md:text-3xl font-serif text-indigo font-semibold mb-2">
-            {persona.name}
-          </h1>
-          <p className="text-lg text-graphite mb-4">{persona.title}</p>
+{/* --- Persona Header Section with Background Pattern --- */}
+<div
+  className="w-full flex justify-center mb-10 py-10"
+  style={{
+    backgroundImage: `url(${pattern})`,
+    backgroundRepeat: "repeat",
+    backgroundSize: "contain",
+    backgroundPosition: "center",
+  }}
+>
+  <div className="bg-white rounded-2xl shadow-md p-8 border-t-4 border-primary w-full max-w-3xl backdrop-blur-sm bg-white/90">
+    <h1 className="text-3xl md:text-3xl font-serif text-indigo font-semibold mb-2">
+      {persona.name}
+    </h1>
+    <p className="text-lg text-graphite mb-4">{persona.title}</p>
 
-          <div className="flex flex-wrap gap-2 mb-6">
-            <span className="bg-grayLight border border-primary px-4 py-2 rounded-lg text-sm font-medium text-primary">
-              {persona.specialty}
-            </span>
-            <span className="bg-grayLight border border-grayNeutral px-4 py-2 rounded-lg text-sm font-medium text-graphite">
-              {persona.subspecialty}
-            </span>
-            <span className="bg-grayLight border border-grayNeutral px-4 py-2 rounded-lg text-sm font-medium text-graphite">
-              {persona.professional_background?.years_in_practice} Years Experience
-            </span>
-          </div>
+    <div className="flex flex-wrap gap-2 mb-6">
+      <span className="bg-grayLight border border-primary px-4 py-2 rounded-lg text-sm font-medium text-primary">
+        {persona.specialty}
+      </span>
+      <span className="bg-grayLight border border-grayNeutral px-4 py-2 rounded-lg text-sm font-medium text-graphite">
+        {persona.subspecialty}
+      </span>
+      <span className="bg-grayLight border border-grayNeutral px-4 py-2 rounded-lg text-sm font-medium text-graphite">
+        {persona.professional_background?.years_in_practice} Years Experience
+      </span>
+    </div>
 
-          <div className="border-l-4 border-primary bg-grayLight p-5 rounded-r-lg">
-            <p className="text-primary italic font-medium text-base leading-relaxed">
-              {persona.quote}
-            </p>
-          </div>
-        </div>
+    <div className="border-l-4 border-primary bg-grayLight p-5 rounded-r-lg">
+      <p className="text-primary italic font-medium text-base leading-relaxed">
+        {persona.quote}
+      </p>
+    </div>
+  </div>
+</div>
+
 
         {/* Tabs */}
         <div className="bg-white rounded-xl shadow-md mb-6">
