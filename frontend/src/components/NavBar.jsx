@@ -1,101 +1,75 @@
-import React, { useState } from "react";
-import { Menu, X } from "lucide-react"; // lightweight icon library
+import React, { useEffect, useState } from "react";
+import { useNavigate } from "react-router-dom";
 import logo from "../assets/Logo.svg";
+import { LogOut, User } from "lucide-react";
+import { logOut } from "../services/authService";
 
-export default function Navbar() {
-  const [isOpen, setIsOpen] = useState(false);
+export default function NavBar() {
+  const navigate = useNavigate();
+  const [isLoggedIn, setIsLoggedIn] = useState(false);
+
+  useEffect(() => {
+    const token = localStorage.getItem("token");
+    setIsLoggedIn(!!token);
+  }, []);
+
+  const handleLogout = async () => {
+    try {
+      await logOut();
+    } catch {
+      // ignore errors (since logout is client-side)
+    } finally {
+      localStorage.removeItem("token");
+      setIsLoggedIn(false);
+      navigate("/signin");
+    }
+  };
 
   return (
-    <nav className="w-full bg-white shadow-sm px-6 md:px-20 py-6 flex items-center justify-between font-sans sticky top-0 z-50">
+    <nav className="w-full bg-white shadow-sm px-8 md:px-20 py-6 flex items-center justify-between font-sans sticky top-0 z-50">
       {/* --- Left: Logo --- */}
-      <div className="flex items-center gap-3">
-        <img
-          src={logo}
-          alt="DNATE Logo"
-          className="h-8 w-auto md:h-8"
-        />
+      <div
+        className="flex items-center gap-3 cursor-pointer"
+        onClick={() => navigate("/")}
+      >
+        <img src={logo} alt="DNATE Logo" className="h-8 w-auto" />
       </div>
 
-      {/* --- Desktop Navigation --- */}
-      <ul className="hidden md:flex items-center gap-10 text-graphite text-sm font-medium">
-        <li className="hover:text-primary transition-colors cursor-pointer flex items-center">
-          The CLEAR™ System
-          <span className="ml-1 text-xs bg-blue-100 text-primary px-1.5 py-0.5 rounded">
-            New
-          </span>
-        </li>
-        <li className="hover:text-primary transition-colors cursor-pointer">
-          Articles
-        </li>
-        <li className="hover:text-primary transition-colors cursor-pointer">
-          Podcast
-        </li>
-        <li className="hover:text-primary transition-colors cursor-pointer">
-          About & Contact
-        </li>
-      </ul>
-
-      {/* --- Right: CTA Button (Desktop) --- */}
-      <button className="hidden md:block bg-primary text-white px-5 py-2.5 rounded-lg font-medium hover:bg-indigo transition-colors text-sm md:text-base">
-        Book Your Discovery Call
-      </button>
-
-      {/* --- Mobile Menu Toggle --- */}
-      <div className="md:hidden">
-        {isOpen ? (
-          <X
-            className="h-6 w-6 text-indigo cursor-pointer"
-            onClick={() => setIsOpen(false)}
-          />
+      {/* --- Right: Buttons (Dynamic) --- */}
+      <div className="flex items-center gap-4">
+        {!isLoggedIn ? (
+          <>
+            <button
+              onClick={() => navigate("/signin")}
+              className="text-primary border border-primary px-4 py-1.5 rounded-lg font-medium hover:bg-primary hover:text-white transition-colors"
+            >
+              Log In
+            </button>
+            <button
+              onClick={() => navigate("/signup")}
+              className="bg-primary text-white px-4 py-1.5 rounded-lg font-medium hover:bg-indigo transition-colors"
+            >
+              Sign Up
+            </button>
+          </>
         ) : (
-          <Menu
-            className="h-6 w-6 text-indigo cursor-pointer"
-            onClick={() => setIsOpen(true)}
-          />
+          <div className="flex items-center gap-3">
+            <button
+              onClick={() => navigate("/profile")}
+              className="flex items-center gap-2 text-graphite hover:text-primary transition-colors"
+            >
+              <User className="h-5 w-5" />
+            </button>
+            <button
+              onClick={handleLogout}
+              className="flex items-center gap-1 text-sm text-gray-600 hover:text-red-500 transition-colors"
+              title="Logout"
+            >
+              <LogOut className="h-4 w-4" />
+            </button>
+          </div>
         )}
       </div>
-
-      {/* --- Mobile Menu Panel --- */}
-      {isOpen && (
-        <div className="absolute top-full left-0 w-full bg-white shadow-md md:hidden animate-slideDown">
-          <ul className="flex flex-col items-center gap-4 py-6 text-graphite text-sm font-medium">
-            <li
-              className="hover:text-primary transition-colors cursor-pointer flex items-center"
-              onClick={() => setIsOpen(false)}
-            >
-              The CLEAR™ System
-              <span className="ml-1 text-xs bg-blue-100 text-primary px-1.5 py-0.5 rounded">
-                New
-              </span>
-            </li>
-            <li
-              className="hover:text-primary transition-colors cursor-pointer"
-              onClick={() => setIsOpen(false)}
-            >
-              Articles
-            </li>
-            <li
-              className="hover:text-primary transition-colors cursor-pointer"
-              onClick={() => setIsOpen(false)}
-            >
-              Podcast
-            </li>
-            <li
-              className="hover:text-primary transition-colors cursor-pointer"
-              onClick={() => setIsOpen(false)}
-            >
-              About & Contact
-            </li>
-
-            <button
-              className="bg-primary text-white px-5 py-2.5 rounded-lg font-medium hover:bg-indigo transition-colors text-sm mt-2"
-              onClick={() => setIsOpen(false)}
-            >
-              Book Your Discovery Call
-            </button>
-          </ul>
-        </div>
-      )}
     </nav>
   );
 }
