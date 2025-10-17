@@ -40,13 +40,13 @@ export default function NavBar() {
         {!isLoggedIn ? (
           <>
             <button
-              onClick={() => navigate("/signin")}
+              onClick={() => navigate("/sign-in")}
               className="text-primary border border-primary px-4 py-1.5 rounded-lg font-medium hover:bg-primary hover:text-white transition-colors"
             >
               Log In
             </button>
             <button
-              onClick={() => navigate("/signup")}
+              onClick={() => navigate("/sign-up")}
               className="bg-primary text-white px-4 py-1.5 rounded-lg font-medium hover:bg-indigo transition-colors"
             >
               Sign Up

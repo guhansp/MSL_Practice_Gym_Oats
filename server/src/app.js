@@ -41,7 +41,6 @@ app.use("/api/data", dataRoutes);
 app.use("/api/goals", goalsRoutes);
 app.use("/api/responses", responsesRoutes);
 app.use("/api/conversation", conversationRoutes);
-app.use("/api/auth", authRoutes);
 app.use("/api/dashboard", dashboardRoutes);
 app.use("/api/questions", questionsRoutes);
 
