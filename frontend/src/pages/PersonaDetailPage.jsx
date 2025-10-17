@@ -1,8 +1,7 @@
-// pages/PersonaDetailPage.jsx
-import React, { useState, useEffect } from 'react';
-import { useParams, useNavigate } from 'react-router-dom';
-import NavBar from '../components/NavBar';
-import { getPersonaById } from '../services/personaService';
+import React, { useState, useEffect } from "react";
+import { useParams, useNavigate } from "react-router-dom";
+import NavBar from "../components/NavBar";
+import { getPersonaById } from "../services/personaService";
 
 export default function PersonaDetailPage() {
   const { personaId } = useParams();
@@ -10,7 +9,7 @@ export default function PersonaDetailPage() {
   const [persona, setPersona] = useState(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
-  const [activeTab, setActiveTab] = useState('overview');
+  const [activeTab, setActiveTab] = useState("overview");
 
   useEffect(() => {
     fetchPersonaDetails();
@@ -23,22 +22,29 @@ export default function PersonaDetailPage() {
       const data = await getPersonaById(personaId);
       setPersona(data.persona);
     } catch (err) {
-      setError(err.response?.data?.error || err.message || 'Failed to load persona');
+      setError(
+        err.response?.data?.error || err.message || "Failed to load persona"
+      );
     } finally {
       setLoading(false);
     }
   };
 
+  // --- Helper Renderers ---
   const renderArrayContent = (items) => {
-    if (!items || items.length === 0) {
-      return <p className="text-graphite">No information available</p>;
-    }
+    if (!items || items.length === 0)
+      return <p className="text-graphite text-base">No information available</p>;
     return (
       <div className="space-y-3">
-        {items.map((item, index) => (
-          <div key={index} className="flex items-start gap-3 bg-grayLight p-4 rounded-lg border border-grayNeutral">
+        {items.map((item, i) => (
+          <div
+            key={i}
+            className="flex items-start gap-3 bg-grayLight p-4 rounded-lg border border-grayNeutral"
+          >
             <div className="w-1.5 h-1.5 bg-primary rounded-full mt-2 flex-shrink-0"></div>
-            <span className="text-graphite text-sm flex-1">{item}</span>
+            <span className="text-graphite text-base leading-relaxed flex-1 font-sans">
+              {item}
+            </span>
           </div>
         ))}
       </div>
@@ -46,17 +52,21 @@ export default function PersonaDetailPage() {
   };
 
   const renderJSONContent = (obj) => {
-    if (!obj || typeof obj !== 'object') {
-      return <p className="text-graphite">No information available</p>;
-    }
+    if (!obj || typeof obj !== "object")
+      return <p className="text-graphite text-base">No information available</p>;
     return (
       <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
         {Object.entries(obj).map(([key, value]) => (
-          <div key={key} className="bg-grayLight p-4 rounded-lg border border-grayNeutral">
-            <p className="text-xs text-graphite font-medium font-mono uppercase tracking-wide mb-2">
-              {key.replace(/_/g, ' ')}
+          <div
+            key={key}
+            className="bg-grayLight p-5 rounded-lg border border-grayNeutral"
+          >
+            <p className="text-xs text-graphite uppercase tracking-wide mb-2 font-sans font-semibold">
+              {key.replace(/_/g, " ")}
             </p>
-            <p className="text-primary font-medium text-sm">{value}</p>
+            <p className="text-primary font-medium text-base font-sans">
+              {value}
+            </p>
           </div>
         ))}
       </div>
@@ -64,40 +74,46 @@ export default function PersonaDetailPage() {
   };
 
   const tabs = [
-    { id: 'overview', label: 'Overview' },
-    { id: 'communication', label: 'Communication Style' },
-    { id: 'priorities', label: 'Priorities & Challenges' },
-    { id: 'engagement', label: 'Engagement Strategies' },
-    { id: 'questions', label: 'Typical Questions' },
+    { id: "overview", label: "Overview" },
+    { id: "communication", label: "Communication Style" },
+    { id: "priorities", label: "Priorities & Challenges" },
+    { id: "engagement", label: "Engagement Strategies" },
+    { id: "questions", label: "Typical Questions" },
   ];
 
-  if (loading) {
+  // --- Loading / Error States ---
+  if (loading)
     return (
       <>
         <NavBar />
         <div className="min-h-screen bg-grayAccent flex items-center justify-center">
           <div className="text-center">
             <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary mx-auto mb-4"></div>
-            <p className="text-graphite font-sans">Loading persona details...</p>
+            <p className="text-graphite font-sans text-base">
+              Loading persona details...
+            </p>
           </div>
         </div>
       </>
     );
-  }
 
-  if (error || !persona) {
+  if (error || !persona)
     return (
       <>
         <NavBar />
         <div className="min-h-screen bg-grayAccent flex items-center justify-center">
           <div className="text-center max-w-md">
             <div className="bg-white border border-grayNeutral rounded-xl p-6 mb-4">
-              <p className="text-primary font-medium mb-2">Error Loading Persona</p>
-              <p className="text-graphite text-sm">{error || 'Persona not found'}</p>
+              <p className="text-primary font-semibold mb-2 text-lg">
+                Error Loading Persona
+              </p>
+              <p className="text-graphite text-base">
+                {error || "Persona not found"}
+              </p>
             </div>
             <button
-              onClick={() => navigate('/personas')}
-              className="bg-primary hover:bg-primary/90 text-white px-6 py-3 rounded-lg font-medium transition-colors duration-300"
+              onClick={() => navigate("/personas")}
+              className="bg-primary hover:bg-primary/90 text-white px-6 py-3 rounded-lg font-medium text-base transition-colors duration-300"
             >
               Back to Personas
             </button>
@@ -105,48 +121,47 @@ export default function PersonaDetailPage() {
         </div>
       </>
     );
-  }
 
+  // --- Main Content ---
   return (
     <>
       <NavBar />
-
       <section className="min-h-screen bg-grayAccent px-6 py-10 font-sans">
         {/* Back Button */}
         <button
-          onClick={() => navigate('/personas')}
-          className="text-primary hover:text-primary/80 mb-6 flex items-center gap-2 font-medium transition-colors"
+          onClick={() => navigate("/personas")}
+          className="text-primary hover:text-primary/80 mb-6 flex items-center gap-2 font-medium text-base"
         >
           ← Back to All Personas
         </button>
 
-        {/* --- Header --- */}
+        {/* Header */}
         <div className="bg-white rounded-2xl shadow-md p-8 mb-8 border-t-4 border-primary">
-          <div>
-            <h1 className="text-3xl md:text-4xl font-serif text-primary font-medium mb-2">
-              {persona.name}
-            </h1>
-            <p className="text-lg text-graphite mb-4">{persona.title}</p>
-            <div className="flex flex-wrap gap-2 mb-6">
-              <span className="bg-grayLight border border-primary px-4 py-2 rounded-lg text-sm font-medium text-primary">
-                {persona.specialty}
-              </span>
-              <span className="bg-grayLight border border-grayNeutral px-4 py-2 rounded-lg text-sm font-medium text-graphite">
-                {persona.subspecialty}
-              </span>
-              <span className="bg-grayLight border border-grayNeutral px-4 py-2 rounded-lg text-sm font-medium text-graphite font-mono">
-                {persona.professional_background?.years_in_practice} Years Experience
-              </span>
-            </div>
+          <h1 className="text-3xl md:text-3xl font-serif text-indigo font-semibold mb-2">
+            {persona.name}
+          </h1>
+          <p className="text-lg text-graphite mb-4">{persona.title}</p>
 
-            {/* Quote */}
-            <div className="border-l-4 border-primary bg-grayLight p-5 rounded-r-lg">
-              <p className="text-primary italic font-medium">{persona.quote}</p>
-            </div>
+          <div className="flex flex-wrap gap-2 mb-6">
+            <span className="bg-grayLight border border-primary px-4 py-2 rounded-lg text-sm font-medium text-primary">
+              {persona.specialty}
+            </span>
+            <span className="bg-grayLight border border-grayNeutral px-4 py-2 rounded-lg text-sm font-medium text-graphite">
+              {persona.subspecialty}
+            </span>
+            <span className="bg-grayLight border border-grayNeutral px-4 py-2 rounded-lg text-sm font-medium text-graphite">
+              {persona.professional_background?.years_in_practice} Years Experience
+            </span>
+          </div>
+
+          <div className="border-l-4 border-primary bg-grayLight p-5 rounded-r-lg">
+            <p className="text-primary italic font-medium text-base leading-relaxed">
+              {persona.quote}
+            </p>
           </div>
         </div>
 
-        {/* --- Tabs --- */}
+        {/* Tabs */}
         <div className="bg-white rounded-xl shadow-md mb-6">
           <div className="border-b border-grayNeutral">
             <div className="flex overflow-x-auto">
@@ -154,10 +169,10 @@ export default function PersonaDetailPage() {
                 <button
                   key={tab.id}
                   onClick={() => setActiveTab(tab.id)}
-                  className={`px-6 py-4 font-medium whitespace-nowrap transition-all duration-300 border-b-2 ${
+                  className={`px-6 py-4 text-base font-medium whitespace-nowrap transition-colors duration-300 ${
                     activeTab === tab.id
-                      ? 'border-primary text-primary bg-grayLight'
-                      : 'border-transparent text-graphite hover:text-primary hover:bg-grayLight'
+                      ? "text-primary bg-grayLight"
+                      : "text-graphite hover:text-primary hover:bg-grayLight"
                   }`}
                 >
                   {tab.label}
@@ -167,200 +182,140 @@ export default function PersonaDetailPage() {
           </div>
         </div>
 
-        {/* --- Content --- */}
-        <div className="bg-white rounded-2xl shadow-md p-6 md:p-8">
-          {/* Overview Tab */}
-          {activeTab === 'overview' && (
-            <div className="space-y-8">
-              <div>
-                <h3 className="text-xl font-serif text-primary font-medium mb-6 pb-2 border-b-2 border-primary">
-                  Professional Background
-                </h3>
+        {/* Tab Content */}
+        <div className="bg-white rounded-2xl shadow-md p-6 md:p-8 text-base leading-relaxed">
+          {activeTab === "overview" && (
+            <div className="space-y-10">
+              <Section title="Professional Background">
                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                  <div className="bg-grayLight border border-grayNeutral p-5 rounded-lg">
-                    <p className="text-xs text-graphite font-medium font-mono uppercase tracking-wide mb-2">
-                      Years in Practice
-                    </p>
-                    <p className="text-primary font-bold text-3xl font-mono">
-                      {persona.professional_background?.years_in_practice}
-                    </p>
-                  </div>
-                  <div className="bg-grayLight border border-grayNeutral p-5 rounded-lg">
-                    <p className="text-xs text-graphite font-medium font-mono uppercase tracking-wide mb-2">
-                      Board Certifications
-                    </p>
-                    <div className="text-primary font-medium space-y-1">
-                      {persona.professional_background?.board_certifications?.map((cert, idx) => (
-                        <div key={idx} className="flex items-start gap-2">
-                          <div className="w-1.5 h-1.5 bg-primary rounded-full mt-2"></div>
-                          <p className="text-sm">{cert}</p>
-                        </div>
-                      ))}
-                    </div>
-                  </div>
-                  <div className="bg-grayLight border border-grayNeutral p-5 rounded-lg">
-                    <p className="text-xs text-graphite font-medium font-mono uppercase tracking-wide mb-2">
-                      Research Involvement
-                    </p>
-                    <p className="text-primary font-medium text-sm">
-                      {persona.professional_background?.research_involvement}
-                    </p>
-                  </div>
-                  <div className="bg-grayLight border border-grayNeutral p-5 rounded-lg">
-                    <p className="text-xs text-graphite font-medium font-mono uppercase tracking-wide mb-2">
-                      Teaching Role
-                    </p>
-                    <p className="text-primary font-medium text-sm">
-                      {persona.professional_background?.teaching_role}
-                    </p>
-                  </div>
+                  <StatBox
+                    label="Years in Practice"
+                    value={persona.professional_background?.years_in_practice}
+                  />
+                  <CertBox
+                    label="Board Certifications"
+                    items={
+                      persona.professional_background?.board_certifications
+                    }
+                  />
+                  <InfoBox
+                    label="Research Involvement"
+                    value={
+                      persona.professional_background?.research_involvement
+                    }
+                  />
+                  <InfoBox
+                    label="Teaching Role"
+                    value={persona.professional_background?.teaching_role}
+                  />
                 </div>
-              </div>
+              </Section>
 
-              <div>
-                <h3 className="text-xl font-serif text-primary font-medium mb-6 pb-2 border-b-2 border-primary">
-                  Practice Setting
-                </h3>
+              <Section title="Practice Setting">
                 {renderJSONContent(persona.practice_setting)}
-              </div>
-
-              <div>
-                <h3 className="text-xl font-serif text-primary font-medium mb-6 pb-2 border-b-2 border-primary">
-                  Patient Population
-                </h3>
+              </Section>
+              <Section title="Patient Population">
                 {renderJSONContent(persona.patient_population)}
-              </div>
-
-              <div>
-                <h3 className="text-xl font-serif text-primary font-medium mb-6 pb-2 border-b-2 border-primary">
-                  Practice Patterns
-                </h3>
+              </Section>
+              <Section title="Practice Patterns">
                 {renderJSONContent(persona.practice_patterns)}
-              </div>
+              </Section>
             </div>
           )}
 
-          {/* Communication Tab */}
-          {activeTab === 'communication' && (
-            <div className="space-y-8">
-              <div>
-                <h3 className="text-xl font-serif text-primary font-medium mb-6 pb-2 border-b-2 border-primary">
-                  Communication Style
-                </h3>
+          {activeTab === "communication" && (
+            <div className="space-y-10">
+              <Section title="Communication Style">
                 {renderJSONContent(persona.communication_style)}
-              </div>
-
-              <div>
-                <h3 className="text-xl font-serif text-primary font-medium mb-6 pb-2 border-b-2 border-primary">
-                  Emotional Drivers
-                </h3>
+              </Section>
+              <Section title="Emotional Drivers">
                 {renderJSONContent(persona.emotional_drivers)}
-              </div>
-
-              <div>
-                <h3 className="text-xl font-serif text-primary font-medium mb-6 pb-2 border-b-2 border-primary">
-                  Decision Making Factors
-                </h3>
+              </Section>
+              <Section title="Decision Making Factors">
                 {renderArrayContent(persona.decision_making_factors)}
-              </div>
+              </Section>
             </div>
           )}
 
-          {/* Priorities Tab */}
-          {activeTab === 'priorities' && (
-            <div className="space-y-8">
-              <div>
-                <h3 className="text-xl font-serif text-primary font-medium mb-6 pb-2 border-b-2 border-primary">
-                  Top Priorities
-                </h3>
+          {activeTab === "priorities" && (
+            <div className="space-y-10">
+              <Section title="Top Priorities">
                 {renderArrayContent(persona.priorities)}
-              </div>
-
-              <div>
-                <h3 className="text-xl font-serif text-primary font-medium mb-6 pb-2 border-b-2 border-primary">
-                  Common Challenges
-                </h3>
+              </Section>
+              <Section title="Common Challenges">
                 {renderArrayContent(persona.common_challenges)}
-              </div>
+              </Section>
             </div>
           )}
 
-          {/* Engagement Tab */}
-          {activeTab === 'engagement' && (
-            <div className="space-y-6">
+          {activeTab === "engagement" && (
+            <div className="space-y-10">
               <div className="bg-grayLight border-l-4 border-primary p-6 rounded-r-lg">
-                <h3 className="font-medium text-primary mb-2">
+                <h3 className="font-semibold text-primary mb-2">
                   Effective Engagement Strategies
                 </h3>
-                <p className="text-graphite text-sm">
-                  These evidence-based strategies are tailored specifically for {persona.name}'s 
-                  communication style, priorities, and decision-making preferences.
+                <p className="text-graphite text-base">
+                  These evidence-based strategies are tailored for{" "}
+                  {persona.name}’s communication style, priorities, and
+                  preferences.
                 </p>
               </div>
-
-              <div>
-                <h3 className="text-xl font-serif text-primary font-medium mb-6 pb-2 border-b-2 border-primary">
-                  Recommended Approaches
-                </h3>
+              <Section title="Recommended Approaches">
                 {renderArrayContent(persona.engagement_tips)}
-              </div>
+              </Section>
             </div>
           )}
 
-          {/* Questions Tab */}
-          {activeTab === 'questions' && (
-            <div className="space-y-8">
-              <div>
-                <h3 className="text-xl font-serif text-primary font-medium mb-6 pb-2 border-b-2 border-primary">
-                  Typical Question Patterns
-                </h3>
-                <p className="text-graphite text-sm mb-4">
-                  Common question types and concerns frequently raised by {persona.name}:
+          {activeTab === "questions" && (
+            <div className="space-y-10">
+              <Section title="Typical Question Patterns">
+                <p className="text-graphite mb-4">
+                  Common question types and concerns frequently raised by{" "}
+                  {persona.name}:
                 </p>
                 {renderArrayContent(persona.typical_questions)}
-              </div>
+              </Section>
 
-              {persona.questions && persona.questions.length > 0 && (
-                <div>
-                  <h3 className="text-xl font-serif text-primary font-medium mb-6 pb-2 border-b-2 border-primary">
-                    Available Practice Questions
-                  </h3>
-                  <p className="text-graphite text-sm mb-4 font-mono">
-                    {persona.questions.length} questions available for practice with this persona
+              {persona.questions?.length > 0 && (
+                <Section title="Available Practice Questions">
+                  <p className="text-graphite mb-4">
+                    {persona.questions.length} questions available for practice
                   </p>
                   <div className="space-y-4">
-                    {persona.questions.map((question) => (
+                    {persona.questions.map((q) => (
                       <div
-                        key={question.id}
+                        key={q.id}
                         className="border-l-4 border-primary bg-grayLight p-5 rounded-r-lg hover:shadow-md transition-all duration-300 border border-grayNeutral"
                       >
-                        <div className="flex items-start justify-between gap-4 flex-col sm:flex-row">
+                        <div className="flex flex-col sm:flex-row justify-between gap-4">
                           <div className="flex-1">
-                            <p className="text-xs font-semibold text-primary font-mono uppercase tracking-wide mb-2">
-                              {question.category}
+                            <p className="text-xs font-semibold text-primary uppercase tracking-wide mb-2 font-sans">
+                              {q.category}
                             </p>
-                            <p className="text-primary font-medium mb-3">
-                              {question.question}
+                            <p className="text-primary font-medium mb-3 font-sans">
+                              {q.question}
                             </p>
                             <div className="flex gap-2 flex-wrap">
-                              <span className="text-xs px-3 py-1 rounded-lg bg-white border border-grayNeutral text-graphite font-medium font-mono uppercase">
-                                {question.difficulty}
+                              <span className="text-xs px-3 py-1 rounded-lg bg-white border border-grayNeutral text-graphite font-sans uppercase">
+                                {q.difficulty}
                               </span>
-                              {question.estimated_response_time && (
-                                <span className="text-xs px-3 py-1 rounded-lg bg-white border border-grayNeutral text-graphite font-mono">
-                                  {question.estimated_response_time}s
+                              {q.estimated_response_time && (
+                                <span className="text-xs px-3 py-1 rounded-lg bg-white border border-grayNeutral text-graphite font-sans">
+                                  {q.estimated_response_time}s
                                 </span>
                               )}
                             </div>
                           </div>
                           <button
-                            onClick={() => navigate('/questions', { 
-                              state: { 
-                                selectedQuestion: question.id,
-                                selectedPersona: persona.id
-                              } 
-                            })}
-                            className="bg-primary hover:bg-primary/90 text-white px-6 py-3 rounded-lg font-medium whitespace-nowrap transition-colors duration-300 w-full sm:w-auto"
+                            onClick={() =>
+                              navigate("/questions", {
+                                state: {
+                                  selectedQuestion: q.id,
+                                  selectedPersona: persona.id,
+                                },
+                              })
+                            }
+                            className="bg-primary hover:bg-primary/90 text-white px-6 py-3 rounded-lg font-medium transition-colors duration-300"
                           >
                             Start Practice Session
                           </button>
@@ -368,12 +323,66 @@ export default function PersonaDetailPage() {
                       </div>
                     ))}
                   </div>
-                </div>
+                </Section>
               )}
             </div>
           )}
         </div>
       </section>
     </>
+  );
+}
+
+/* Helper Components (Clean Sans Style, no mono font) */
+function Section({ title, children }) {
+  return (
+    <div>
+      <h3 className="text-xl font-serif text-primary font-semibold mb-6 pb-2 border-b-2 border-primary">
+        {title}
+      </h3>
+      {children}
+    </div>
+  );
+}
+
+function StatBox({ label, value }) {
+  return (
+    <div className="bg-grayLight border border-grayNeutral p-5 rounded-lg text-center">
+      <p className="text-xs text-graphite uppercase tracking-wide mb-1 font-sans font-semibold">
+        {label}
+      </p>
+      <p className="text-primary font-bold text-4xl font-sans leading-tight">
+        {value}
+      </p>
+    </div>
+  );
+}
+
+function CertBox({ label, items }) {
+  return (
+    <div className="bg-grayLight border border-grayNeutral p-5 rounded-lg">
+      <p className="text-xs text-graphite uppercase tracking-wide mb-2 font-sans font-semibold">
+        {label}
+      </p>
+      <div className="text-primary font-medium space-y-1">
+        {items?.map((cert, i) => (
+          <div key={i} className="flex items-start gap-2">
+            <div className="w-1.5 h-1.5 bg-primary rounded-full mt-2"></div>
+            <p className="text-sm font-sans text-primary">{cert}</p>
+          </div>
+        ))}
+      </div>
+    </div>
+  );
+}
+
+function InfoBox({ label, value }) {
+  return (
+    <div className="bg-grayLight border border-grayNeutral p-5 rounded-lg">
+      <p className="text-xs text-graphite uppercase tracking-wide mb-2 font-sans font-semibold">
+        {label}
+      </p>
+      <p className="text-primary font-medium text-base font-sans">{value}</p>
+    </div>
   );
 }
