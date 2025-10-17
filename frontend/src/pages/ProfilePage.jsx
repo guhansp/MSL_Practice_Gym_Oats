@@ -36,10 +36,11 @@ export default function ProfilePage() {
       setLoading(true);
       const response = await API.get("/auth/me");
       const userData = response.data.user;
+      console.log("Fetched user data:", userData);
       setUser(userData);
       setFormData({
-        firstName: userData.first_name || "",
-        lastName: userData.last_name || "",
+        firstName: userData.firstName || "",
+        lastName: userData.lastName || "",
         organization: userData.organization || "",
       });
     } catch (err) {
@@ -51,7 +52,8 @@ export default function ProfilePage() {
 
   const fetchStats = async () => {
     try {
-      const response = await API.get("/sessions/stats");
+      const response = await API.get("/sessions/statsall");
+      console.log("Fetched stats:", response.data);
       setStats(response.data);
     } catch (err) {
       console.error("Error fetching stats:", err);
@@ -202,8 +204,8 @@ export default function ProfilePage() {
               {!isEditing ? (
                 <div className="space-y-4">
                   {[
-                    ["First Name", user?.first_name],
-                    ["Last Name", user?.last_name],
+                    ["First Name", user?.firstName],
+                    ["Last Name", user?.lastName],
                     ["Email Address", user?.email],
                     ["Organization", user?.organization],
                     ["Account Role", user?.role || "MSL"],
@@ -227,7 +229,7 @@ export default function ProfilePage() {
                       </p>
                       <p className="text-primary font-medium text-base">
                         {user?.created_at
-                          ? new Date(user.created_at).toLocaleDateString()
+                          ? new Date(user.createdAt).toLocaleDateString()
                           : "N/A"}
                       </p>
                     </div>
@@ -237,7 +239,7 @@ export default function ProfilePage() {
                       </p>
                       <p className="text-primary font-medium text-base">
                         {user?.last_login_at
-                          ? new Date(user.last_login_at).toLocaleDateString()
+                          ? new Date(user.lastLoginAt)
                           : "N/A"}
                       </p>
                     </div>
