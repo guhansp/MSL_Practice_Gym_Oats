@@ -251,7 +251,7 @@ export default function Dashboard() {
           />
           <MetricCard
             title="Practice Time Logged"
-            value={`${totalHours}h ${remainingMinutes}m ${totalSeconds}s`}
+            value={`${totalHours}h ${remainingMinutes}m`}
             color="text-indigo"
           />
           <MetricCard
