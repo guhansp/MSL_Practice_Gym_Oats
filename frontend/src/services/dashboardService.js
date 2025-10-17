@@ -1,7 +1,7 @@
 import API from "./api";
 
 export const fetchUserDashboard = async () => {
-  const res = await API.get("/dashboard/userData");
+  const res = await API.get("/sessions/statsall");
   return res.data;
 };
 
