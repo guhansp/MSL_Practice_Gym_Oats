@@ -9,6 +9,7 @@ import Dashboard from "./pages/Dashboard";
 import QuestionSelection from "./pages/QuestionSelectionPage";
 import PersonasPage from "./pages/PersonasPage";
 import PersonaDetailPage from "./pages/PersonaDetailPage";
+import ProfilePage from "./pages/ProfilePage";
 function App() {
   return (
     <Router>
@@ -23,6 +24,7 @@ function App() {
         <Route path="/questions" element={<QuestionSelection />} />
         <Route path="/personas" element={<PersonasPage />} />
         <Route path="/personas/:personaId" element={<PersonaDetailPage />} />
+        <Route path="/profile" element={<ProfilePage />} />
       </Routes>
     </Router>
   );
