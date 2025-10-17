@@ -1,4 +1,3 @@
-// components/NavBar.jsx
 import React, { useEffect, useState } from "react";
 import { useNavigate, useLocation } from "react-router-dom";
 import logo from "../assets/Logo.svg";
@@ -54,15 +53,15 @@ export default function NavBar() {
 
       {/* --- Center: Navigation Links (Desktop - Logged In Only) --- */}
       {isLoggedIn && (
-        <div className="hidden md:flex items-center gap-8">
+        <div className="hidden md:flex items-center gap-10">
           {authenticatedLinks.map((link) => (
             <button
               key={link.path}
               onClick={() => handleNavigation(link.path)}
-              className={`text-sm font-medium transition-all duration-200 ${
+              className={`text-base font-semibold transition-colors duration-200 ${
                 isActive(link.path)
-                  ? "text-primary border-b-2 border-primary pb-1"
-                  : "text-graphite border-b-2 border-transparent pb-1 hover:text-primary hover:border-primary/30"
+                  ? "text-primary"
+                  : "text-indigo hover:text-primary"
               }`}
             >
               {link.label}
@@ -72,7 +71,7 @@ export default function NavBar() {
       )}
 
       {/* --- Right: Auth Buttons (Desktop) --- */}
-      <div className="hidden md:flex items-center gap-3">
+      <div className="hidden md:flex items-center gap-6">
         {!isLoggedIn ? (
           <>
             <button
@@ -89,25 +88,25 @@ export default function NavBar() {
             </button>
           </>
         ) : (
-          <div className="flex items-center gap-2">
+          <div className="flex items-center gap-6">
             <button
               onClick={() => handleNavigation("/profile")}
-              className={`flex items-center gap-2 px-4 py-2 rounded-lg font-medium transition-all duration-200 text-sm ${
+              className={`flex items-center gap-2 text-base font-semibold transition-colors duration-200 ${
                 isActive("/profile")
-                  ? "bg-grayLight text-primary border border-primary"
-                  : "text-graphite hover:bg-grayLight border border-transparent"
+                  ? "text-primary"
+                  : "text-indigo hover:text-primary"
               }`}
             >
-              <User className="h-4 w-4" />
+              <User className="h-5 w-5" />
               <span>Profile</span>
             </button>
             <button
               onClick={handleLogout}
-              className="flex items-center gap-2 text-sm text-graphite px-3 py-2 rounded-lg transition-all duration-200 hover:bg-grayLight"
+              className="flex items-center gap-2 text-base font-semibold text-indigo hover:text-primary transition-colors duration-200"
               title="Logout"
             >
-              <LogOut className="h-4 w-4" />
-              <span className="hidden lg:inline">Logout</span>
+              <LogOut className="h-5 w-5" />
+              <span>Logout</span>
             </button>
           </div>
         )}
@@ -153,10 +152,10 @@ export default function NavBar() {
                   <button
                     key={link.path}
                     onClick={() => handleNavigation(link.path)}
-                    className={`w-full text-left px-4 py-3 rounded-lg font-medium transition-all duration-200 text-sm ${
+                    className={`w-full text-left px-4 py-3 rounded-lg font-medium transition-all duration-200 text-base ${
                       isActive(link.path)
                         ? "bg-grayLight text-primary border-l-4 border-primary"
-                        : "text-graphite hover:bg-grayLight"
+                        : "text-indigo hover:text-primary hover:bg-grayLight"
                     }`}
                   >
                     {link.label}
@@ -169,22 +168,22 @@ export default function NavBar() {
                 {/* Profile */}
                 <button
                   onClick={() => handleNavigation("/profile")}
-                  className={`w-full flex items-center gap-2 px-4 py-3 rounded-lg font-medium transition-all duration-200 text-sm ${
+                  className={`w-full flex items-center gap-2 px-4 py-3 rounded-lg font-semibold transition-colors duration-200 text-base ${
                     isActive("/profile")
-                      ? "bg-grayLight text-primary border-l-4 border-primary"
-                      : "text-graphite hover:bg-grayLight"
+                      ? "text-primary"
+                      : "text-indigo hover:text-primary"
                   }`}
                 >
-                  <User className="h-4 w-4" />
-                  <span>My Profile</span>
+                  <User className="h-5 w-5" />
+                  <span>Profile</span>
                 </button>
 
                 {/* Logout */}
                 <button
                   onClick={handleLogout}
-                  className="w-full flex items-center gap-2 px-4 py-3 rounded-lg font-medium transition-all duration-200 text-sm text-graphite hover:bg-grayLight"
+                  className="w-full flex items-center gap-2 px-4 py-3 rounded-lg font-semibold text-base text-indigo hover:text-primary transition-colors duration-200"
                 >
-                  <LogOut className="h-4 w-4" />
+                  <LogOut className="h-5 w-5" />
                   <span>Logout</span>
                 </button>
               </>
