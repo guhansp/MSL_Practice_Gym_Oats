@@ -75,7 +75,7 @@ export default function PersonasPage() {
       <section className="min-h-screen bg-grayAccent px-6 py-10 font-sans">
         {/* --- Header --- */}
         <div className="mb-10">
-          <h1 className="text-3xl md:text-4xl font-serif text-indigo mb-3">
+          <h1 className="text-3xl md:text-3xl font-serif text-indigo mb-3">
             Physician Personas
           </h1>
           <p className="text-graphite text-base leading-relaxed max-w-3xl">
