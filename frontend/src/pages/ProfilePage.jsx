@@ -39,8 +39,8 @@ export default function ProfilePage() {
       console.log("Fetched user data:", userData);
       setUser(userData);
       setFormData({
-        firstName: userData.firstName || "",
-        lastName: userData.lastName || "",
+        firstName: userData.first_name || userData.firstName || "",
+        lastName: userData.last_name || userData.lastName || "",
         organization: userData.organization || "",
       });
     } catch (err) {
@@ -161,12 +161,12 @@ export default function ProfilePage() {
             </p>
           </div>
         </div>
-                  <button
-            onClick={() => navigate("/dashboard")}
-            className="text-primary hover:text-primary/80 font-medium text-base mb-5"
-          >
-            ← Dashboard
-          </button>
+        <button
+          onClick={() => navigate("/dashboard")}
+          className="text-primary hover:text-primary/80 font-medium text-base mb-5"
+        >
+          ← Dashboard
+        </button>
 
         {/* --- Alerts --- */}
         {successMessage && (
@@ -191,21 +191,21 @@ export default function ProfilePage() {
                 <h2 className="text-2xl font-serif text-primary font-semibold">
                   Account Information
                 </h2>
-                {/* {!isEditing && (
+                {!isEditing && (
                   <button
                     onClick={() => setIsEditing(true)}
                     className="bg-primary hover:bg-primary/90 text-white px-4 py-2 rounded-lg font-medium text-sm"
                   >
                     Edit Profile
                   </button>
-                )} */}
+                )}
               </div>
 
               {!isEditing ? (
                 <div className="space-y-4">
                   {[
-                    ["First Name", user?.firstName],
-                    ["Last Name", user?.lastName],
+                    ["First Name", user?.first_name || user?.firstName],
+                    ["Last Name", user?.last_name || user?.lastName],
                     ["Email Address", user?.email],
                     ["Organization", user?.organization],
                     ["Account Role", user?.role || "MSL"],
@@ -228,8 +228,8 @@ export default function ProfilePage() {
                         Member Since
                       </p>
                       <p className="text-primary font-medium text-base">
-                        {user?.created_at
-                          ? new Date(user.createdAt).toLocaleDateString()
+                        {user?.created_at || user?.createdAt
+                          ? new Date(user.created_at || user.createdAt).toLocaleDateString()
                           : "N/A"}
                       </p>
                     </div>
@@ -238,8 +238,8 @@ export default function ProfilePage() {
                         Last Login
                       </p>
                       <p className="text-primary font-medium text-base">
-                        {user?.last_login_at
-                          ? new Date(user.lastLoginAt)
+                        {user?.last_login_at || user?.lastLoginAt
+                          ? new Date(user.last_login_at || user.lastLoginAt).toLocaleDateString()
                           : "N/A"}
                       </p>
                     </div>
@@ -292,8 +292,8 @@ export default function ProfilePage() {
                       onClick={() => {
                         setIsEditing(false);
                         setFormData({
-                          firstName: user?.first_name || "",
-                          lastName: user?.last_name || "",
+                          firstName: user?.first_name || user?.firstName || "",
+                          lastName: user?.last_name || user?.lastName || "",
                           organization: user?.organization || "",
                         });
                       }}
@@ -306,8 +306,8 @@ export default function ProfilePage() {
               )}
             </div>
 
-            {/* Security Settings */}
-            {/* <div className="bg-white rounded-2xl shadow-md p-6 sm:p-8">
+            {/* Security Settings
+            <div className="bg-white rounded-2xl shadow-md p-6 sm:p-8">
               <h2 className="text-2xl font-serif text-primary font-semibold mb-6">
                 Security Settings
               </h2>
@@ -384,8 +384,8 @@ export default function ProfilePage() {
                   </div>
                 </form>
               )}
-            </div> */}
-          </div>
+            </div>*/}
+          </div> 
 
           {/* --- Right Column: Stats & Actions --- */}
           <div className="lg:col-span-1 space-y-6">
@@ -405,11 +405,9 @@ export default function ProfilePage() {
                 <StatBox
                   label="Practice Time"
                   value={
-                    stats?.totalPracticeTimeSeconds
-                      ? Math.floor(stats.totalPracticeTimeSeconds / 60)
-                      : 0
+                    stats?.totalPracticeTimeSeconds                     
                   }
-                  suffix="minutes"
+                  suffix="seconds"
                 />
               </div>
             </div>
