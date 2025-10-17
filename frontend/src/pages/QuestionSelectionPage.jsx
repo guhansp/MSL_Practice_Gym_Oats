@@ -6,34 +6,43 @@ import API from "../services/api";
 export default function QuestionSelection() {
   const [filters, setFilters] = useState({
     search: "",
-    category: "All",
-    difficulty: "All",
+    category: "All Categories",
+    difficulty: "All Difficulties",
+    persona: "All Personas",
   });
 
   const [questions, setQuestions] = useState([]);
   const [personasByQuestion, setPersonasByQuestion] = useState({});
   const [selectedPersonas, setSelectedPersonas] = useState({});
+  const [filterOptions, setFilterOptions] = useState({
+    categories: [],
+    difficulties: [],
+    personas: [],
+  });
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
 
-  // --- Load all questions and their personas ---
+  // --- Load all questions and personas ---
   useEffect(() => {
     const loadQuestions = async () => {
       try {
         setLoading(true);
         const res = await fetchQuestions();
-        setQuestions(res.data);
+        const questionData = res.data;
+        setQuestions(questionData);
 
         // Fetch personas for each question
         const personaMap = {};
         const selectionMap = {};
+        const personaSet = new Set();
 
         await Promise.all(
-          res.data.map(async (q) => {
+          questionData.map(async (q) => {
             try {
               const resp = await API.get(`/questions/${q.id}/personas`);
               personaMap[q.id] = resp.data.personas || [];
               selectionMap[q.id] = resp.data.personas?.[0] || "—";
+              resp.data.personas?.forEach((p) => personaSet.add(p));
             } catch {
               personaMap[q.id] = [];
               selectionMap[q.id] = "—";
@@ -43,6 +52,21 @@ export default function QuestionSelection() {
 
         setPersonasByQuestion(personaMap);
         setSelectedPersonas(selectionMap);
+
+        // --- Build dynamic filter options ---
+        const categorySet = new Set();
+        const difficultySet = new Set();
+
+        questionData.forEach((q) => {
+          if (q.category) categorySet.add(q.category);
+          if (q.difficulty) difficultySet.add(q.difficulty);
+        });
+
+        setFilterOptions({
+          categories: ["All Categories", ...Array.from(categorySet)],
+          difficulties: ["All Difficulties", ...Array.from(difficultySet)],
+          personas: ["All Personas", ...Array.from(personaSet)],
+        });
       } catch (err) {
         console.error("Error loading questions:", err);
         setError("Failed to load questions or personas.");
@@ -54,20 +78,28 @@ export default function QuestionSelection() {
     loadQuestions();
   }, []);
 
-  // --- Filters ---
+  // --- Filtered questions ---
   const filteredQuestions = questions.filter((q) => {
     const matchSearch = q.question?.toLowerCase().includes(filters.search.toLowerCase());
-    const matchCategory = filters.category === "All" || q.category === filters.category;
-    const matchDifficulty = filters.difficulty === "All" || q.difficulty === filters.difficulty;
-    return matchSearch && matchCategory && matchDifficulty;
+    const matchCategory =
+      filters.category === "All Categories" || q.category === filters.category;
+    const matchDifficulty =
+      filters.difficulty === "All Difficulties" || q.difficulty === filters.difficulty;
+
+    const availablePersonas = personasByQuestion[q.id] || [];
+    const matchPersona =
+      filters.persona === "All Personas" ||
+      availablePersonas.includes(filters.persona.toLowerCase()) ||
+      availablePersonas.includes(filters.persona);
+
+    return matchSearch && matchCategory && matchDifficulty && matchPersona;
   });
 
-  // --- Difficulty color ---
   const getDifficultyColor = (difficulty) => {
     const d = difficulty?.toLowerCase();
     if (d === "easy") return "text-green-600";
     if (d === "medium") return "text-yellow-600";
-    if (d === "hard") return "text-red-600";
+    if (d === "hard" || d === "high") return "text-red-600";
     return "text-gray-500";
   };
 
@@ -78,17 +110,26 @@ export default function QuestionSelection() {
     }));
   };
 
+  const formatLabel = (str) => {
+    if (!str) return str;
+    return str
+      .toLowerCase()
+      .replace(/\b\w/g, (c) => c.toUpperCase())
+      .replace("All", "All"); // keeps "All Categories" readable
+  };
+
   return (
     <>
       <NavBar />
 
       <section className="min-h-screen bg-grayAccent px-6 py-10 font-sans">
         <h1 className="text-2xl md:text-3xl font-serif text-indigo font-medium text-center mb-8">
-          Question Selection Interface
+          Questions
         </h1>
 
         {/* --- Filter Controls --- */}
         <div className="flex flex-wrap justify-center gap-4 mb-8">
+          {/* Search */}
           <input
             type="text"
             placeholder="Search questions..."
@@ -96,27 +137,43 @@ export default function QuestionSelection() {
             onChange={(e) => setFilters({ ...filters, search: e.target.value })}
           />
 
+          {/* Category */}
           <select
-            className="border border-gray-300 rounded-lg px-3 py-2 w-40 focus:ring-2 focus:ring-primary"
+            className="border border-gray-300 rounded-lg px-3 py-2 w-44 focus:ring-2 focus:ring-primary"
+            value={filters.category}
             onChange={(e) => setFilters({ ...filters, category: e.target.value })}
           >
-            <option value="All">All Categories</option>
-            <option value="Behavioral">Behavioral</option>
-            <option value="Technical">Technical</option>
-            <option value="Leadership">Leadership</option>
-            <option value="Communication">Communication</option>
-            <option value="Cost & Value">Cost & Value</option>
-            <option value="Clinical Data & Evidence">Clinical Data & Evidence</option>
+            {filterOptions.categories.map((cat) => (
+              <option key={cat} value={cat}>
+                {formatLabel(cat)}
+              </option>
+            ))}
           </select>
 
+          {/* Difficulty */}
           <select
             className="border border-gray-300 rounded-lg px-3 py-2 w-40 focus:ring-2 focus:ring-primary"
+            value={filters.difficulty}
             onChange={(e) => setFilters({ ...filters, difficulty: e.target.value })}
           >
-            <option value="All">All Difficulty</option>
-            <option value="Easy">Easy</option>
-            <option value="Medium">Medium</option>
-            <option value="Hard">Hard</option>
+            {filterOptions.difficulties.map((diff) => (
+              <option key={diff} value={diff}>
+                {formatLabel(diff)}
+              </option>
+            ))}
+          </select>
+
+          {/* Persona */}
+          <select
+            className="border border-gray-300 rounded-lg px-3 py-2 w-44 focus:ring-2 focus:ring-primary"
+            value={filters.persona}
+            onChange={(e) => setFilters({ ...filters, persona: e.target.value })}
+          >
+            {filterOptions.personas.map((p) => (
+              <option key={p} value={p}>
+                {formatLabel(p)}
+              </option>
+            ))}
           </select>
         </div>
 
@@ -143,15 +200,21 @@ export default function QuestionSelection() {
                 No questions match your filters.
               </p>
             ) : (
-              filteredQuestions.map((q) => (
+              filteredQuestions.map((q, idx) => (
                 <div
                   key={q.id}
-                  className="grid grid-cols-[3fr_1.5fr_1fr_1.5fr_1fr_1fr] items-center px-6 py-4 border-b hover:bg-gray-50 transition-all"
+                  className={`grid grid-cols-[3fr_1.5fr_1fr_1.5fr_1fr_1fr] px-6 py-4 border-b hover:bg-gray-50 transition-all items-start ${
+                    idx % 2 === 0 ? "bg-white" : "bg-gray-50"
+                  }`}
                 >
                   {/* Question */}
-                  <div>
-                    <p className="font-medium text-indigo-800">{q.question}</p>
-                    <p className="text-xs text-gray-500">{q.context}</p>
+                  <div className="max-w-[520px] flex flex-col gap-1 mr-10">
+                    <p className="font-medium text-indigo-800 leading-snug break-words whitespace-normal">
+                      {q.question}
+                    </p>
+                    <p className="text-xs text-gray-500 leading-snug break-words whitespace-normal">
+                      {q.context}
+                    </p>
                   </div>
 
                   {/* Category */}
@@ -159,23 +222,20 @@ export default function QuestionSelection() {
 
                   {/* Difficulty */}
                   <p className={`text-sm font-semibold ${getDifficultyColor(q.difficulty)}`}>
-                    {q.difficulty?.charAt(0).toUpperCase() + q.difficulty?.slice(1)}
+                    {formatLabel(q.difficulty)}
                   </p>
 
                   {/* Persona Dropdown */}
                   <div>
-                    {personasByQuestion[q.id] &&
-                    personasByQuestion[q.id].length > 0 ? (
+                    {personasByQuestion[q.id] && personasByQuestion[q.id].length > 0 ? (
                       <select
                         value={selectedPersonas[q.id] || personasByQuestion[q.id][0]}
-                        onChange={(e) =>
-                          handlePersonaChange(q.id, e.target.value)
-                        }
+                        onChange={(e) => handlePersonaChange(q.id, e.target.value)}
                         className="border border-gray-300 rounded-md px-2 py-1 text-sm focus:ring-2 focus:ring-primary"
                       >
                         {personasByQuestion[q.id].map((p) => (
                           <option key={p} value={p}>
-                            {p.charAt(0).toUpperCase() + p.slice(1)}
+                            {formatLabel(p)}
                           </option>
                         ))}
                       </select>
@@ -189,13 +249,15 @@ export default function QuestionSelection() {
                     {q.estimated_response_time || "-"}
                   </p>
 
-                  {/* Action Button */}
-                  <div className="flex justify-center">
+                  {/* Practice Button */}
+                  <div className="flex justify-center items-center">
                     <button
                       className="bg-primary hover:bg-indigo text-white text-sm font-medium px-4 py-1.5 rounded-md shadow-sm transition-all"
                       onClick={() =>
                         alert(
-                          `Starting practice for "${q.question}" as ${selectedPersonas[q.id] || "N/A"}`
+                          `Starting practice for "${q.question}" as ${
+                            selectedPersonas[q.id] || "N/A"
+                          }`
                         )
                       }
                     >

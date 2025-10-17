@@ -1,26 +1,29 @@
 import React, { useEffect, useState } from "react";
 import NavBar from "../components/NavBar";
-import {
-  PieChart,
-  Pie,
-  Cell,
-  Tooltip,
-  ResponsiveContainer,
-} from "recharts";
-import { fetchUserDashboard } from "../services/dashboardService";
+import { PieChart, Pie, Cell, Tooltip, ResponsiveContainer } from "recharts";
+import { Flame } from "lucide-react";
+import { fetchUserDashboard, fetchUserSessions } from "../services/dashboardService";
 
 export default function Dashboard() {
   const [dashboardData, setDashboardData] = useState(null);
+  const [recentSessions, setRecentSessions] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
+  const [timeRange, setTimeRange] = useState("1m");
 
-  const userName = "Ashmiya"; // later replace with decoded user name from JWT
+  const userName = "Ashmiya";
 
   useEffect(() => {
     const loadDashboard = async () => {
       try {
-        const res = await fetchUserDashboard();
-        setDashboardData(res.progress);
+        const [dashboardRes, sessionsRes] = await Promise.all([
+          fetchUserDashboard(),
+          fetchUserSessions(),
+        ]);
+
+        // ✅ Your backend returns { progress: { total_sessions, ... } }
+        setDashboardData(dashboardRes.progress);
+        setRecentSessions(sessionsRes);
       } catch (err) {
         setError(err.response?.data?.message || "Failed to load dashboard");
       } finally {
@@ -30,60 +33,97 @@ export default function Dashboard() {
     loadDashboard();
   }, []);
 
-  const getColorClass = (score) => {
-    if (score < 50) return "text-red-600";
-    if (score < 75) return "text-yellow-600";
-    return "text-green-600";
+  const getColorForConfidence = (value) => {
+    if (value === 0) return "bg-gray-200";
+    if (value <= 1) return "bg-blue-200";
+    if (value <= 2) return "bg-blue-300";
+    if (value <= 3) return "bg-blue-400";
+    if (value <= 4) return "bg-blue-500";
+    return "bg-blue-700";
   };
 
-  const getChipColor = (score) => {
-    if (score < 50) return "bg-red-100 text-red-700";
-    if (score < 75) return "bg-yellow-100 text-yellow-700";
-    return "bg-green-100 text-green-700";
+  // ✅ Using your exact key names
+  const totalSessions = dashboardData?.total_sessions || 0;
+  const totalSeconds = dashboardData?.total_practice_time_seconds || 0;
+  const totalMinutes = Math.floor(totalSeconds / 60);
+  const totalHours = Math.floor(totalMinutes / 60);
+  const remainingMinutes = totalMinutes % 60;
+  const currentStreak = dashboardData?.current_streak_days || 0;
+
+  // ✅ Persona cards — persona_stats
+  const scores = dashboardData?.persona_stats
+    ? Object.entries(dashboardData.persona_stats).map(([persona, stats], i) => ({
+        id: i + 1,
+        title: persona.charAt(0).toUpperCase() + persona.slice(1),
+        score: Math.round((stats.avg_confidence / 5) * 100),
+        sessions: stats.count,
+      }))
+    : [];
+
+  // ✅ Category chart — category_stats
+  const confidenceData = dashboardData?.category_stats
+    ? Object.entries(dashboardData.category_stats).map(([category, stats], i) => ({
+        name: category,
+        value: Math.round((stats.avg_confidence / 5) * 100),
+        color: ["#1B004B", "#0077E6", "#00AEEF", "#404A69", "#5AC8FA"][i % 5],
+      }))
+    : [];
+
+  // ✅ Confidence trend (0–5 scale)
+  const confidenceTrend = dashboardData?.confidence_trend || [];
+  const formattedTrend = confidenceTrend.map((t) => ({
+    date: new Date(t.date),
+    confidence: t.avg_confidence,
+  }));
+
+  // Build GitHub-style heatmap (week-wise)
+  const buildHeatmapGrid = () => {
+    const today = new Date();
+    const cutoff = new Date(today);
+    if (timeRange === "3m") cutoff.setMonth(today.getMonth() - 3);
+    else if (timeRange === "6m") cutoff.setMonth(today.getMonth() - 6);
+    else cutoff.setMonth(today.getMonth() - 1);
+
+    const allDays = [];
+    for (let d = new Date(cutoff); d <= today; d.setDate(d.getDate() + 1)) {
+      const found = formattedTrend.find(
+        (x) => new Date(x.date).toDateString() === d.toDateString()
+      );
+      allDays.push({
+        date: new Date(d),
+        confidence: found ? found.confidence : 0,
+      });
+    }
+
+    const weeks = [];
+    for (let i = 0; i < allDays.length; i += 7) {
+      const slice = allDays.slice(i, i + 7);
+      while (slice.length < 7)
+        slice.unshift({ confidence: 0, date: new Date(slice[0]?.date || today) });
+      weeks.push(slice);
+    }
+    return weeks;
   };
 
-  // Placeholder if API hasn’t returned yet
-  const scores =
-    dashboardData?.scores || [
-      { id: 1, title: "Presentation Skills", score: 45 },
-      { id: 2, title: "Scientific Writing", score: 65 },
-      { id: 3, title: "Team Communication", score: 80 },
-      { id: 4, title: "Confidence in Meetings", score: 72 },
-      { id: 5, title: "Public Speaking", score: 90 },
-    ];
+  const heatmapWeeks = buildHeatmapGrid();
 
-  const totalSessions = dashboardData?.total_sessions || 42;
-  const totalMinutes = dashboardData?.total_minutes || 560;
-  const currentStreak = dashboardData?.streak || 7;
+  const getMonthLabels = () => {
+    if (!heatmapWeeks.length) return [];
+    const months = [];
+    const firstDate = heatmapWeeks[0][0].date;
+    const lastDate = heatmapWeeks[heatmapWeeks.length - 1].slice(-1)[0].date;
+    const cursor = new Date(firstDate);
+    while (cursor <= lastDate) {
+      months.push({
+        label: cursor.toLocaleString("en-US", { month: "short" }),
+        start: new Date(cursor),
+      });
+      cursor.setMonth(cursor.getMonth() + 1);
+    }
+    return months;
+  };
 
-  const confidenceData =
-    dashboardData?.confidence_data || [
-      { name: "Presentation", value: 45, color: "#0077E6" },
-      { name: "Writing", value: 65, color: "#00AEEF" },
-      { name: "Communication", value: 80, color: "#1B004B" },
-      { name: "Meetings", value: 72, color: "#404A69" },
-      { name: "Public Speaking", value: 90, color: "#5AC8FA" },
-    ];
-
-  const recentSessions =
-    dashboardData?.recent_sessions || [
-      { date: "Oct 14, 2025", topic: "Scientific Writing", score: 75 },
-      { date: "Oct 13, 2025", topic: "Presentation Skills", score: 82 },
-      { date: "Oct 12, 2025", topic: "Confidence in Meetings", score: 65 },
-      { date: "Oct 10, 2025", topic: "Public Speaking", score: 88 },
-      { date: "Oct 9, 2025", topic: "Team Communication", score: 71 },
-    ];
-
-  const streakData = Array.from({ length: 30 }, () =>
-    Math.random() > 0.4 ? 1 : 0
-  );
-  const sessionsCompleted = streakData.filter((d) => d === 1).length;
-  const longestStreak = Math.max(
-    ...streakData
-      .join("")
-      .split("0")
-      .map((s) => s.length)
-  );
+  const monthLabels = getMonthLabels();
 
   if (loading)
     return (
@@ -102,7 +142,9 @@ export default function Dashboard() {
   return (
     <>
       <NavBar />
-      <section className="min-h-screen bg-grayAccent px-6 py-10 font-sans">
+
+      <section className="min-h-screen bg-grayAccent px-6 md:px-10 py-10 font-sans">
+        {/* Header */}
         <h1 className="text-2xl md:text-3xl font-serif text-indigo font-medium mb-10">
           Welcome, <span className="text-primary">{userName}</span>
         </h1>
@@ -112,12 +154,16 @@ export default function Dashboard() {
           <MetricCard title="Total Sessions Completed" value={totalSessions} color="text-primary" />
           <MetricCard
             title="Practice Time Logged"
-            value={`${Math.floor(totalMinutes / 60)}h ${totalMinutes % 60}m`}
+            value={`${totalHours}h ${remainingMinutes}m`}
             color="text-indigo"
           />
           <MetricCard
             title="Current Streak"
-            value={`${currentStreak} Days 🔥`}
+            value={
+              <span className="flex items-center justify-center gap-2">
+                {currentStreak} Days <Flame className="h-6 w-6 text-orange-500" />
+              </span>
+            }
             color="text-green-600"
           />
         </div>
@@ -136,19 +182,25 @@ export default function Dashboard() {
 
         {/* --- Confidence Cards --- */}
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-5 gap-6 mb-12">
+        {/* --- Persona Scores (Full Row Stretch) --- */}
+        <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-3 gap-6 mb-12 w-full">
           {scores.map((item) => {
             const label =
               item.score < 50 ? "Low" : item.score < 75 ? "Medium" : "High";
             return (
               <div
                 key={item.id}
-                className="rounded-xl p-6 shadow-md bg-white flex flex-col justify-between transition-transform hover:-translate-y-1"
+                className="w-full rounded-xl p-6 shadow-md bg-white flex flex-col justify-between hover:-translate-y-1 transition-transform"
               >
                 <div className="flex justify-end mb-2">
                   <div
-                    className={`px-3 py-1 text-xs font-semibold rounded-full ${getChipColor(
-                      item.score
-                    )}`}
+                    className={`px-3 py-1 text-xs font-semibold rounded-full ${
+                      item.score < 50
+                        ? "bg-red-100 text-red-700"
+                        : item.score < 75
+                        ? "bg-yellow-100 text-yellow-700"
+                        : "bg-green-100 text-green-700"
+                    }`}
                   >
                     {label}
                   </div>
@@ -158,11 +210,22 @@ export default function Dashboard() {
                 </h2>
                 <p className="text-sm font-bold">
                   Confidence Score:{" "}
-                  <span className={`text-base ${getColorClass(item.score)}`}>
+                  <span
+                    className={`text-base ${
+                      item.score < 50
+                        ? "text-red-600"
+                        : item.score < 75
+                        ? "text-yellow-600"
+                        : "text-green-600"
+                    }`}
+                  >
                     {item.score}%
                   </span>
                 </p>
-                <button className="mt-5 bg-primary hover:bg-indigo text-white px-4 py-2 rounded-lg font-medium text-sm transition-colors duration-300">
+                <p className="text-xs text-gray-500 mb-3">
+                  Sessions: {item.sessions}
+                </p>
+                <button className="mt-auto bg-primary hover:bg-indigo text-white px-4 py-2 rounded-lg font-medium text-sm transition-colors">
                   Practice Now
                 </button>
               </div>
@@ -170,12 +233,12 @@ export default function Dashboard() {
           })}
         </div>
 
-        {/* --- Confidence by Category Chart --- */}
-        <div className="bg-white rounded-2xl shadow-md p-6 md:p-8 mb-10">
+        {/* --- Category Chart --- */}
+        <div className="bg-white rounded-2xl shadow-md p-6 md:p-8 mb-10 w-full">
           <h2 className="font-serif text-xl md:text-2xl text-indigo font-medium mb-6">
             Confidence by Category
           </h2>
-          <div className="h-72">
+          <div className="h-80">
             <ResponsiveContainer width="100%" height="100%">
               <PieChart>
                 <Pie
@@ -191,81 +254,132 @@ export default function Dashboard() {
                     <Cell key={`cell-${index}`} fill={entry.color} />
                   ))}
                 </Pie>
-                <Tooltip
-                  contentStyle={{
-                    backgroundColor: "#ffffff",
-                    borderRadius: "10px",
-                    border: "1px solid #E5E7EB",
-                    color: "#1B004B",
-                  }}
-                />
+                <Tooltip />
               </PieChart>
             </ResponsiveContainer>
           </div>
         </div>
 
-        {/* --- Streak Heatmap --- */}
-        <div className="bg-white shadow-md rounded-2xl p-6 md:p-8 max-w-5xl mx-auto mb-10">
-          <h2 className="font-serif text-xl md:text-2xl text-indigo font-medium mb-4">
-            Your Consistency Streak
-          </h2>
-          <p className="text-graphite mb-6">
-            You've completed{" "}
-            <span className="font-semibold text-primary">
-              {sessionsCompleted}
-            </span>{" "}
-            sessions this month. Longest streak:{" "}
-            <span className="font-semibold text-primary">{longestStreak}</span>{" "}
-            days in a row.
-          </p>
-          <div className="flex flex-wrap gap-1">
-            {streakData.map((day, i) => (
-              <div
-                key={i}
-                className={`h-4 w-4 sm:h-5 sm:w-5 rounded-sm ${
-                  day ? "bg-primary" : "bg-grayNeutral"
-                } transition-all duration-300 hover:scale-110`}
-                title={`Day ${i + 1}: ${day ? "Practiced" : "Missed"}`}
-              ></div>
-            ))}
+        {/* --- Confidence Trend --- */}
+        <div className="bg-white shadow-md rounded-2xl p-6 md:p-8 w-full mb-10">
+          <div className="flex flex-wrap items-center justify-between mb-6">
+            <h2 className="font-serif text-xl md:text-2xl text-indigo font-medium">
+              Confidence Trend (0–5 Scale)
+            </h2>
+            <div className="flex gap-3">
+              {["1m", "3m", "6m"].map((range) => (
+                <button
+                  key={range}
+                  className={`px-4 py-1.5 rounded-md text-sm font-medium border ${
+                    timeRange === range
+                      ? "bg-primary text-white border-primary"
+                      : "bg-white text-graphite border-gray-300 hover:bg-gray-50"
+                  }`}
+                  onClick={() => setTimeRange(range)}
+                >
+                  {range === "1m"
+                    ? "This Month"
+                    : range === "3m"
+                    ? "Last 3 Months"
+                    : "Last 6 Months"}
+                </button>
+              ))}
+            </div>
+          </div>
+
+          {/* Heatmap */}
+          <div className="flex flex-col items-center">
+            <div className="flex justify-start gap-[3px] mb-2 text-xs text-gray-500 w-full pl-6">
+              {monthLabels.map((m) => (
+                <div key={m.label} className="w-[56px] text-center">
+                  {m.label}
+                </div>
+              ))}
+            </div>
+
+            <div className="flex overflow-x-auto gap-[3px] justify-center pb-4">
+              {heatmapWeeks.map((week, wi) => (
+                <div key={wi} className="flex flex-col gap-[3px]">
+                  {week.map((day, di) => (
+                    <div
+                      key={di}
+                      className={`h-4 w-4 sm:h-5 sm:w-5 rounded-sm ${getColorForConfidence(
+                        day.confidence
+                      )}`}
+                      title={`${day.date.toLocaleDateString()}: ${day.confidence?.toFixed(
+                        1
+                      )}/5`}
+                    ></div>
+                  ))}
+                </div>
+              ))}
+            </div>
+          </div>
+
+          <div className="flex justify-center gap-2 mt-4 text-xs text-gray-600 items-center">
+            <span className="h-4 w-4 bg-gray-200 rounded-sm"></span> 0
+            <span className="h-4 w-4 bg-blue-200 rounded-sm"></span> 1
+            <span className="h-4 w-4 bg-blue-300 rounded-sm"></span> 2
+            <span className="h-4 w-4 bg-blue-400 rounded-sm"></span> 3
+            <span className="h-4 w-4 bg-blue-500 rounded-sm"></span> 4
+            <span className="h-4 w-4 bg-blue-700 rounded-sm"></span> 5
           </div>
         </div>
 
         {/* --- Recent Sessions --- */}
-        <div className="bg-white rounded-2xl shadow-md p-6 md:p-8 max-w-5xl mx-auto">
+        <div className="bg-white rounded-2xl shadow-md p-6 md:p-8 w-full mb-16">
           <h2 className="font-serif text-xl md:text-2xl text-indigo font-medium mb-6">
             Recent Session History
           </h2>
-          <table className="w-full text-left border-collapse">
-            <thead>
-              <tr className="text-gray-600 border-b">
-                <th className="pb-3 text-sm font-medium">Date</th>
-                <th className="pb-3 text-sm font-medium">Topic</th>
-                <th className="pb-3 text-sm font-medium">Confidence Score</th>
-              </tr>
-            </thead>
-            <tbody>
-              {recentSessions.map((session, idx) => (
-                <tr
-                  key={idx}
-                  className="border-b last:border-none hover:bg-gray-50 transition"
-                >
-                  <td className="py-3 text-sm">{session.date}</td>
-                  <td className="py-3 text-sm">{session.topic}</td>
-                  <td className="py-3 text-sm font-semibold text-indigo">
-                    {session.score}%
-                  </td>
+
+          {recentSessions.length === 0 ? (
+            <p className="text-gray-500 text-sm italic">No sessions yet.</p>
+          ) : (
+            <table className="w-full text-left border-collapse">
+              <thead>
+                <tr className="text-gray-600 border-b">
+                  <th className="pb-3 text-sm font-medium">Date</th>
+                  <th className="pb-3 text-sm font-medium">Persona</th>
+                  <th className="pb-3 text-sm font-medium">Category</th>
+                  <th className="pb-3 text-sm font-medium">Confidence</th>
+                  <th className="pb-3 text-sm font-medium">Status</th>
                 </tr>
-              ))}
-            </tbody>
-          </table>
+              </thead>
+              <tbody>
+                {recentSessions.map((s) => (
+                  <tr
+                    key={s.id}
+                    className="border-b last:border-none hover:bg-gray-50 transition"
+                  >
+                    <td className="py-3 text-sm">
+                      {new Date(s.started_at).toLocaleDateString()}
+                    </td>
+                    <td className="py-3 text-sm">{s.persona_name}</td>
+                    <td className="py-3 text-sm">{s.category}</td>
+                    <td className="py-3 text-sm text-indigo font-semibold">
+                      {s.confidence_rating ? `${s.confidence_rating}/5` : "—"}
+                    </td>
+                    <td
+                      className={`py-3 text-sm font-medium ${
+                        s.status === "completed"
+                          ? "text-green-600"
+                          : "text-yellow-600"
+                      }`}
+                    >
+                      {s.status === "completed" ? "Completed" : "In Progress"}
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          )}
         </div>
       </section>
     </>
   );
 }
 
-// Small reusable component for cleaner layout
+// Metric Card Component
 function MetricCard({ title, value, color }) {
   return (
     <div className="bg-white rounded-xl shadow-md p-6 text-center">
