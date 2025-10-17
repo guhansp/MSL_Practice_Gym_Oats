@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from "react";
-import { useNavigate } from "react-router-dom"; 
+import { useNavigate } from "react-router-dom";
 import NavBar from "../components/NavBar";
 import {
   PieChart,
@@ -19,65 +19,71 @@ import {
 } from "recharts";
 import pattern from "../assets/Pattern_Dot.png";
 import { Flame } from "lucide-react";
-import { fetchHeatMap, fetchUserDashboard, fetchUserSessions } from "../services/dashboardService";
+import {
+  fetchUserDashboard,
+  fetchUserSessions,
+  fetchUserStats,
+} from "../services/dashboardService";
 
 export default function Dashboard() {
-  const navigate = useNavigate(); 
+  const navigate = useNavigate();
   const [dashboardData, setDashboardData] = useState(null);
   const [recentSessions, setRecentSessions] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
   const [userName, setUserName] = useState("User");
+  const [statsData, setStatsData] = useState(null);
 
-  
   const [timeRange, setTimeRange] = useState("1m");
   const [selectedCategory, setSelectedCategory] = useState("");
 
-
-// At the top of your component, add default values
-const defaultDashboard = {
-  total_sessions: 0,
-  total_practice_time_seconds: 0,
-  current_streak_days: 0,
-  persona_stats: {},
-  category_stats: {},
-  confidence_trend: [],
-  first_name: "User",
-  last_name: ""
-};
-
-// In your useEffect
-useEffect(() => {
-  const loadDashboard = async () => {
-    try {
-      const [dashboardRes, sessionsRes] = await Promise.all([
-        fetchUserDashboard(),
-        fetchUserSessions(),
-        fetchHeatMap(30),
-      ]);
-
-      // Merge with defaults to ensure all properties exist
-      setDashboardData({
-        ...defaultDashboard,
-        ...dashboardRes.progress
-      });
-      
-      setUserName(
-        `${dashboardRes.progress.first_name || "User"} ${dashboardRes.progress.last_name || ""}`.trim()
-      );
-      setRecentSessions(sessionsRes || []);
-    } catch (err) {
-      console.error("Dashboard load error:", err);
-      setError(err.response?.data?.message || "Failed to load dashboard");
-      // Set default data even on error so page doesn't crash
-      setDashboardData(defaultDashboard);
-    } finally {
-      setLoading(false);
-    }
+  // At the top of your component, add default values
+  const defaultDashboard = {
+    total_sessions: 0,
+    total_practice_time_seconds: 0,
+    current_streak_days: 0,
+    persona_stats: {},
+    category_stats: {},
+    confidence_trend: [],
+    first_name: "User",
+    last_name: "",
   };
-  loadDashboard();
-}, []);
 
+  // In your useEffect
+  useEffect(() => {
+    const loadDashboard = async () => {
+      try {
+        const [dashboardRes, sessionsRes, statsRes] = await Promise.all([
+          fetchUserDashboard(),
+          fetchUserSessions(),
+          fetchUserStats(),
+        ]);
+
+        // Merge with defaults to ensure all properties exist
+        setDashboardData({
+          ...defaultDashboard,
+          ...dashboardRes.progress,
+        });
+
+        setStatsData(statsRes);
+
+        setUserName(
+          `${dashboardRes.progress.first_name || "User"} ${
+            dashboardRes.progress.last_name || ""
+          }`.trim()
+        );
+        setRecentSessions(sessionsRes || []);
+      } catch (err) {
+        console.error("Dashboard load error:", err);
+        setError(err.response?.data?.message || "Failed to load dashboard");
+        // Set default data even on error so page doesn't crash
+        setDashboardData(defaultDashboard);
+      } finally {
+        setLoading(false);
+      }
+    };
+    loadDashboard();
+  }, []);
 
   const getColorForConfidence = (value) => {
     if (value === 0) return "bg-gray-200";
@@ -88,37 +94,43 @@ useEffect(() => {
     return "bg-blue-700";
   };
 
-  const totalSessions = dashboardData?.total_sessions || 0;
-  const totalSeconds = dashboardData?.total_practice_time_seconds || 0;
+  const totalSessions = statsData?.totalSessions || 0;
+  const totalSeconds = statsData?.totalPracticeTimeSeconds || 0;
   const totalMinutes = Math.floor(totalSeconds / 60);
   const totalHours = Math.floor(totalMinutes / 60);
   const remainingMinutes = totalMinutes % 60;
-  const currentStreak = dashboardData?.current_streak_days || 0;
+  const currentStreak = statsData?.currentStreak || 0;
 
   // Persona Cards
-  const scores = dashboardData?.persona_stats
-    ? Object.entries(dashboardData.persona_stats).map(([persona, stats], i) => ({
+  const scores = statsData?.personaBreakdown
+    ? statsData.personaBreakdown.map((p, i) => ({
         id: i + 1,
-        title: persona.charAt(0).toUpperCase() + persona.slice(1),
-        score: Math.round((stats.avg_confidence / 5) * 100),
-        sessions: stats.count,
+        title: p.persona_name || p.persona_id, // Fallback to ID if name missing
+        score: Math.round((parseFloat(p.avg_confidence || 0) / 5) * 100),
+        sessions: parseInt(p.count || 0, 10),
       }))
     : [];
 
   // Category Pie Chart
-  const confidenceData = dashboardData?.category_stats
-    ? Object.entries(dashboardData.category_stats).map(([category, stats], i) => ({
-        name: category,
-        value: Math.round((stats.avg_confidence / 5) * 100),
+  const confidenceData = statsData?.categoryBreakdown
+    ? statsData.categoryBreakdown.map((c, i) => ({
+        name: c.category || "Uncategorized",
+        value: Math.round((parseFloat(c.avg_confidence || 0) / 5) * 100),
         color: ["#1B004B", "#0077E6", "#00AEEF", "#404A69", "#5AC8FA"][i % 5],
       }))
     : [];
 
   // Confidence Trend
-  const confidenceTrend = dashboardData?.confidence_trend || [];
+  const confidenceTrend = [
+    {
+      date: new Date(),
+      confidence: statsData?.avgConfidence || 0,
+    },
+  ];
+
   const formattedTrend = confidenceTrend.map((t) => ({
-    date: new Date(t.date),
-    confidence: t.avg_confidence,
+    date: t.date,
+    confidence: t.confidence,
   }));
 
   // Build heatmap grid
@@ -144,7 +156,10 @@ useEffect(() => {
     for (let i = 0; i < allDays.length; i += 7) {
       const slice = allDays.slice(i, i + 7);
       while (slice.length < 7)
-        slice.unshift({ confidence: 0, date: new Date(slice[0]?.date || today) });
+        slice.unshift({
+          confidence: 0,
+          date: new Date(slice[0]?.date || today),
+        });
       weeks.push(slice);
     }
     return weeks;
@@ -171,7 +186,9 @@ useEffect(() => {
   const monthLabels = getMonthLabels();
 
   // Category dropdown for heatmap
-  const allCategories = [...new Set(confidenceTrend.map((item) => item.category))];
+  const allCategories = [
+    ...new Set(confidenceTrend.map((item) => item.category)),
+  ];
   useEffect(() => {
     if (!selectedCategory && allCategories.length > 0) {
       setSelectedCategory(allCategories[0]);
@@ -227,17 +244,22 @@ useEffect(() => {
 
         {/* Summary Metrics */}
         <div className="grid grid-cols-1 sm:grid-cols-3 gap-6 mb-10">
-          <MetricCard title="Total Sessions Completed" value={totalSessions} color="text-primary" />
+          <MetricCard
+            title="Total Sessions Completed"
+            value={totalSessions}
+            color="text-primary"
+          />
           <MetricCard
             title="Practice Time Logged"
-            value={`${totalHours}h ${remainingMinutes}m`}
+            value={`${totalHours}h ${remainingMinutes}m ${totalSeconds}s`}
             color="text-indigo"
           />
           <MetricCard
             title="Current Streak"
             value={
               <span className="flex items-center justify-center gap-2">
-                {currentStreak} Days <Flame className="h-6 w-6 text-orange-500" />
+                {currentStreak} Days{" "}
+                <Flame className="h-6 w-6 text-orange-500" />
               </span>
             }
             color="text-green-600"
@@ -291,10 +313,11 @@ useEffect(() => {
               No Persona Data Yet
             </h3>
             <p className="text-sm text-gray-500 mb-4">
-              Complete practice sessions to see your confidence scores by persona
+              Complete practice sessions to see your confidence scores by
+              persona
             </p>
             <button
-              onClick={() => navigate('/questions')}
+              onClick={() => navigate("/questions")}
               className="bg-primary hover:bg-primary/90 text-white font-medium px-6 py-3 rounded-lg transition-colors"
             >
               Start Your First Session
@@ -323,7 +346,9 @@ useEffect(() => {
                       {label}
                     </div>
                   </div>
-                  <h2 className="text-lg font-medium text-indigo mb-2">{item.title}</h2>
+                  <h2 className="text-lg font-medium text-indigo mb-2">
+                    {item.title}
+                  </h2>
                   <p className="text-sm font-bold">
                     Confidence Score:{" "}
                     <span
@@ -338,9 +363,11 @@ useEffect(() => {
                       {(item.score / 20).toFixed(1)} / 5
                     </span>
                   </p>
-                  <p className="text-xs text-gray-500 mb-3">Sessions: {item.sessions}</p>
-                  <button 
-                    onClick={() => navigate('/questions')}
+                  <p className="text-xs text-gray-500 mb-3">
+                    Sessions: {item.sessions}
+                  </p>
+                  <button
+                    onClick={() => navigate("/questions")}
                     className="mt-auto bg-primary hover:bg-indigo text-white px-4 py-2 rounded-lg font-medium text-sm transition-colors"
                   >
                     Practice Now
@@ -359,7 +386,8 @@ useEffect(() => {
               Confidence by Category
             </h2>
             <p className="text-gray-500 text-sm">
-              No category data available yet. Start practicing to see your progress!
+              No category data available yet. Start practicing to see your
+              progress!
             </p>
           </div>
         ) : (
@@ -370,7 +398,33 @@ useEffect(() => {
             <div className="h-80">
               <ResponsiveContainer width="100%" height="100%">
                 <PieChart>
-                  {/* ... existing chart code ... */}
+                  <Pie
+                    data={confidenceData}
+                    dataKey="value"
+                    nameKey="name"
+                    innerRadius="50%"
+                    outerRadius="80%"
+                    label={({ name, value }) => `${name}: ${value}%`}
+                    labelLine={false}
+                  >
+                    {confidenceData.map((entry, index) => (
+                      <Cell key={`cell-${index}`} fill={entry.color} />
+                    ))}
+                  </Pie>
+                  <Tooltip
+                    formatter={(value, name) => [`${value}%`, "Avg Confidence"]}
+                    contentStyle={{
+                      borderRadius: "8px",
+                      borderColor: "#ddd",
+                      backgroundColor: "#fff",
+                    }}
+                    labelStyle={{ fontWeight: "bold", color: "#333" }}
+                  />
+                  <Legend
+                    verticalAlign="bottom"
+                    align="center"
+                    wrapperStyle={{ fontSize: "12px", marginTop: "10px" }}
+                  />
                 </PieChart>
               </ResponsiveContainer>
             </div>
@@ -433,68 +487,6 @@ useEffect(() => {
           </div>
         </div> */}
 
-        {/* Category Strength Heatmap (Dropdown + Bars) */}
-        {/* <div className="bg-white rounded-2xl shadow-md p-6 md:p-8 mb-10 w-full">
-          <div className="flex items-center justify-between mb-6 flex-wrap gap-3">
-            <h2 className="font-serif text-xl md:text-2xl text-indigo font-medium">
-              Category Strength Heatmap
-            </h2>
-
-            <select
-              value={selectedCategory}
-              onChange={(e) => setSelectedCategory(e.target.value)}
-              className="border border-gray-300 rounded-md px-3 py-2 text-sm text-gray-700 focus:outline-none focus:ring-2 focus:ring-indigo"
-            >
-              {allCategories.map((cat) => (
-                <option key={cat} value={cat}>
-                  {cat}
-                </option>
-              ))}
-            </select>
-          </div>
-
-          {categoryHeatmapData.length === 0 ? (
-            <p className="text-gray-500 text-sm italic">
-              No data available for this category.
-            </p>
-          ) : (
-            <div className="h-80">
-              <ResponsiveContainer width="100%" height="100%">
-                <BarChart data={categoryHeatmapData}>
-                  <XAxis dataKey="date" tick={{ fontSize: 11 }} />
-                  <YAxis domain={[0, 5]} tickCount={6} />
-                  <Tooltip />
-                  <Bar
-                    dataKey="confidence"
-                    shape={(props) => {
-                      const { x, y, width, height, payload } = props;
-                      const shades = [
-                        "#E0ECFF",
-                        "#A8D0FF",
-                        "#72B6FF",
-                        "#3C9DFF",
-                        "#0077E6",
-                        "#005BB5",
-                      ];
-                      const shade = shades[Math.round(payload.confidence)] || "#E0ECFF";
-                      return (
-                        <Rectangle
-                          x={x}
-                          y={y}
-                          width={width}
-                          height={height}
-                          fill={shade}
-                          radius={[2, 2, 0, 0]}
-                        />
-                      );
-                    }}
-                  />
-                </BarChart>
-              </ResponsiveContainer>
-            </div>
-          )}
-        </div> */}
-
         {/* Performance Comparison (Composite Chart 0–5 Scale) */}
         <div className="bg-white rounded-2xl shadow-md p-6 md:p-8 mb-10 w-full">
           <h2 className="font-serif text-xl md:text-2xl text-indigo font-medium mb-6">
@@ -504,12 +496,44 @@ useEffect(() => {
             <ComposedChart data={performanceComparison}>
               <CartesianGrid strokeDasharray="3 3" />
               <XAxis dataKey="persona" tick={{ fontSize: 12 }} />
-              <YAxis yAxisId="left" orientation="left" label={{ value: "Sessions", angle: -90, position: "insideLeft" }} />
-              <YAxis yAxisId="right" orientation="right" domain={[0, 5]} label={{ value: "Confidence (0–5)", angle: 90, position: "insideRight" }} />
+              <YAxis
+                yAxisId="left"
+                orientation="left"
+                label={{
+                  value: "Sessions",
+                  angle: -90,
+                  position: "insideLeft",
+                }}
+              />
+              <YAxis
+                yAxisId="right"
+                orientation="right"
+                domain={[0, 5]}
+                label={{
+                  value: "Confidence (0–5)",
+                  angle: 90,
+                  position: "insideRight",
+                }}
+              />
               <Tooltip />
               <Legend />
-              <Bar yAxisId="left" dataKey="sessions" fill="#5AC8FA" barSize={40} name="Sessions" />
-              <Line yAxisId="right" type="monotone" dataKey="confidence" stroke="#0077E6" strokeWidth={3} dot={{ r: 4 }} activeDot={{ r: 6 }} name="Confidence (0–5)" />
+              <Bar
+                yAxisId="left"
+                dataKey="sessions"
+                fill="#5AC8FA"
+                barSize={40}
+                name="Sessions"
+              />
+              <Line
+                yAxisId="right"
+                type="monotone"
+                dataKey="confidence"
+                stroke="#0077E6"
+                strokeWidth={3}
+                dot={{ r: 4 }}
+                activeDot={{ r: 6 }}
+                name="Confidence (0–5)"
+              />
             </ComposedChart>
           </ResponsiveContainer>
         </div>
@@ -529,15 +553,17 @@ useEffect(() => {
               ></div>
             </div>
             <p className="text-sm text-gray-600">
-              Progress: <span className="font-semibold">{goalProgress}%</span> of target{" "}
-              <span className="font-semibold">{goalTarget}%</span>
+              Progress: <span className="font-semibold">{goalProgress}%</span>{" "}
+              of target <span className="font-semibold">{goalTarget}%</span>
             </p>
             <p
               className={`mt-2 font-semibold ${
                 goalAchieved ? "text-green-600" : "text-indigo"
               }`}
             >
-              {goalAchieved ? "🎯 Goal Achieved!" : "Keep going — you're almost there!"}
+              {goalAchieved
+                ? "🎯 Goal Achieved!"
+                : "Keep going — you're almost there!"}
             </p>
           </div>
         </div> */}
@@ -575,7 +601,8 @@ useEffect(() => {
                       </td>
                       <td className="py-3 text-sm">
                         {s.persona_id
-                          ? s.persona_id.charAt(0).toUpperCase() + s.persona_id.slice(1)
+                          ? s.persona_id.charAt(0).toUpperCase() +
+                            s.persona_id.slice(1)
                           : ""}
                       </td>
                       <td className="py-3 text-sm">{s.persona_name}</td>
