@@ -1,5 +1,7 @@
 import React from "react";
 import { useNavigate } from "react-router-dom";
+import linePattern from "../assets/pattern.png";
+import pattern from "../assets/Pattern_Dot.png";
 import Navbar from "../components/NavBar";
 
 export default function Home() {
@@ -188,7 +190,13 @@ export default function Home() {
       </section>
 
       {/* Stats Section */}
-      <section className="bg-white py-12 sm:py-20 px-4 sm:px-6 lg:px-8">
+      <section className="bg-white py-12 sm:py-20 px-4 sm:px-6 lg:px-8"
+               style={{
+      backgroundImage: `url(${pattern})`,
+      backgroundRepeat: "repeat",
+      backgroundSize: "contain",
+      backgroundPosition: "center",
+    }}>
         <div className="max-w-6xl mx-auto">
           <div className="grid grid-cols-1 sm:grid-cols-3 gap-6 sm:gap-8">
             {benefits.map((benefit, index) => (
@@ -309,7 +317,13 @@ export default function Home() {
       </section>
 
       {/* Why This Matters Section */}
-      <section className="bg-grayAccent py-12 sm:py-20 px-4 sm:px-6 lg:px-8">
+      <section className="bg-grayAccent py-12 sm:py-20 px-4 sm:px-6 lg:px-8"
+               style={{
+      backgroundImage: `url(${linePattern})`,
+      backgroundRepeat: "repeat",
+      backgroundSize: "contain",
+      backgroundPosition: "center",
+    }}>
         <div className="max-w-4xl mx-auto">
           <div className="bg-white rounded-2xl shadow-md p-6 sm:p-10 border-t-4 border-primary">
             <h2 className="text-2xl sm:text-3xl md:text-4xl font-serif text-primary font-medium mb-6 text-center">
