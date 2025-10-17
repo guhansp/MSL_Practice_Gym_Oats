@@ -189,14 +189,14 @@ export default function ProfilePage() {
                 <h2 className="text-2xl font-serif text-primary font-semibold">
                   Account Information
                 </h2>
-                {!isEditing && (
+                {/* {!isEditing && (
                   <button
                     onClick={() => setIsEditing(true)}
                     className="bg-primary hover:bg-primary/90 text-white px-4 py-2 rounded-lg font-medium text-sm"
                   >
                     Edit Profile
                   </button>
-                )}
+                )} */}
               </div>
 
               {!isEditing ? (
@@ -305,7 +305,7 @@ export default function ProfilePage() {
             </div>
 
             {/* Security Settings */}
-            <div className="bg-white rounded-2xl shadow-md p-6 sm:p-8">
+            {/* <div className="bg-white rounded-2xl shadow-md p-6 sm:p-8">
               <h2 className="text-2xl font-serif text-primary font-semibold mb-6">
                 Security Settings
               </h2>
@@ -382,7 +382,7 @@ export default function ProfilePage() {
                   </div>
                 </form>
               )}
-            </div>
+            </div> */}
           </div>
 
           {/* --- Right Column: Stats & Actions --- */}
