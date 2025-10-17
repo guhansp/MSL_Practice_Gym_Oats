@@ -18,7 +18,7 @@ import {
   Rectangle,
 } from "recharts";
 import { Flame } from "lucide-react";
-import { fetchUserDashboard, fetchUserSessions } from "../services/dashboardService";
+import { fetchHeatMap, fetchUserDashboard, fetchUserSessions } from "../services/dashboardService";
 
 export default function Dashboard() {
   const navigate = useNavigate(); 
@@ -52,6 +52,7 @@ useEffect(() => {
       const [dashboardRes, sessionsRes] = await Promise.all([
         fetchUserDashboard(),
         fetchUserSessions(),
+        fetchHeatMap(30),
       ]);
 
       // Merge with defaults to ensure all properties exist
@@ -342,7 +343,7 @@ useEffect(() => {
         </div>
 
         {/* Confidence Trend */}
-        <div className="bg-white shadow-md rounded-2xl p-6 md:p-8 w-full mb-10">
+        {/* <div className="bg-white shadow-md rounded-2xl p-6 md:p-8 w-full mb-10">
           <div className="flex flex-wrap items-center justify-between mb-6">
             <h2 className="font-serif text-xl md:text-2xl text-indigo font-medium">
               Confidence Trend (0–5 Scale)
@@ -395,10 +396,10 @@ useEffect(() => {
               ))}
             </div>
           </div>
-        </div>
+        </div> */}
 
         {/* Category Strength Heatmap (Dropdown + Bars) */}
-        <div className="bg-white rounded-2xl shadow-md p-6 md:p-8 mb-10 w-full">
+        {/* <div className="bg-white rounded-2xl shadow-md p-6 md:p-8 mb-10 w-full">
           <div className="flex items-center justify-between mb-6 flex-wrap gap-3">
             <h2 className="font-serif text-xl md:text-2xl text-indigo font-medium">
               Category Strength Heatmap
@@ -457,7 +458,7 @@ useEffect(() => {
               </ResponsiveContainer>
             </div>
           )}
-        </div>
+        </div> */}
 
         {/* Performance Comparison (Composite Chart 0–5 Scale) */}
         <div className="bg-white rounded-2xl shadow-md p-6 md:p-8 mb-10 w-full">
@@ -479,7 +480,7 @@ useEffect(() => {
         </div>
 
         {/* Goal Achievement */}
-        <div className="bg-white rounded-2xl shadow-md p-6 md:p-8 mb-16 w-full text-center">
+        {/* <div className="bg-white rounded-2xl shadow-md p-6 md:p-8 mb-16 w-full text-center">
           <h2 className="font-serif text-xl md:text-2xl text-indigo font-medium mb-6">
             Goal Achievement Tracking
           </h2>
@@ -504,7 +505,7 @@ useEffect(() => {
               {goalAchieved ? "🎯 Goal Achieved!" : "Keep going — you're almost there!"}
             </p>
           </div>
-        </div>
+        </div> */}
 
         {/* Session History */}
         <div className="bg-white rounded-2xl shadow-md p-6 md:p-8 w-full mb-16">
