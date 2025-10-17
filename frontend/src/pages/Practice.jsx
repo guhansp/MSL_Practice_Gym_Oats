@@ -57,11 +57,11 @@ export default function Practice() {
     return () => clearTimeout(t);
   }, [running, seconds, stop]);
 
-  function startSession() {
+  async function startSession() {
     resetRecording();
     setSeconds(TIMER_DEFAULT);
-    setRunning(true);
-    start();
+    const ok = await start();     // robustness: only start timer if recording actually began
+    if (ok) setRunning(true);
   }
 
   function stopSession() {

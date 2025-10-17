@@ -41,9 +41,11 @@ export function useRecorder({ mode = "audio" } = {}) {
       };
       mr.start();
       setRecording(true);
+      return true;  // robustness: signal success
     } catch (e) {
       setErr(e?.message || "Failed to start recording");
       setRecording(false);
+      return false; // robustness: signal failure
     }
   }
 
