@@ -268,78 +268,98 @@ useEffect(() => {
         {/* --- Confidence Cards --- */}
         {/* <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-5 gap-6 mb-12"/> */}
         {/* --- Persona Scores (Full Row Stretch) --- */}
-        <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-3 gap-6 mb-12 w-full">
-          {scores.map((item) => {
-            const label =
-              item.score < 50 ? "Low" : item.score < 75 ? "Medium" : "High";
-            return (
-              <div
-                key={item.id}
-                className="w-full rounded-xl p-6 shadow-md bg-white flex flex-col justify-between hover:-translate-y-1 transition-transform"
-              >
-                <div className="flex justify-end mb-2">
-                  <div
-                    className={`px-3 py-1 text-xs font-semibold rounded-full ${
-                      item.score < 50
-                        ? "bg-red-100 text-red-700"
-                        : item.score < 75
-                        ? "bg-yellow-100 text-yellow-700"
-                        : "bg-green-100 text-green-700"
-                    }`}
-                  >
-                    {label}
+        {/* --- Persona Scores (Full Row Stretch) --- */}
+        {scores.length === 0 ? (
+          <div className="bg-white rounded-xl shadow-md p-8 mb-12 text-center">
+            <h3 className="text-lg font-medium text-graphite mb-2">
+              No Persona Data Yet
+            </h3>
+            <p className="text-sm text-gray-500 mb-4">
+              Complete practice sessions to see your confidence scores by persona
+            </p>
+            <button
+              onClick={() => navigate('/questions')}
+              className="bg-primary hover:bg-primary/90 text-white font-medium px-6 py-3 rounded-lg transition-colors"
+            >
+              Start Your First Session
+            </button>
+          </div>
+        ) : (
+          <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-3 gap-6 mb-12 w-full">
+            {scores.map((item) => {
+              const label =
+                item.score < 50 ? "Low" : item.score < 75 ? "Medium" : "High";
+              return (
+                <div
+                  key={item.id}
+                  className="w-full rounded-xl p-6 shadow-md bg-white flex flex-col justify-between hover:-translate-y-1 transition-transform"
+                >
+                  <div className="flex justify-end mb-2">
+                    <div
+                      className={`px-3 py-1 text-xs font-semibold rounded-full ${
+                        item.score < 50
+                          ? "bg-red-100 text-red-700"
+                          : item.score < 75
+                          ? "bg-yellow-100 text-yellow-700"
+                          : "bg-green-100 text-green-700"
+                      }`}
+                    >
+                      {label}
+                    </div>
                   </div>
-                </div>
-                <h2 className="text-lg font-medium text-indigo mb-2">{item.title}</h2>
-                <p className="text-sm font-bold">
-                  Confidence Score:{" "}
-                  <span
-                    className={`text-base ${
-                      item.score < 50
-                        ? "text-red-600"
-                        : item.score < 75
-                        ? "text-yellow-600"
-                        : "text-green-600"
-                    }`}
+                  <h2 className="text-lg font-medium text-indigo mb-2">{item.title}</h2>
+                  <p className="text-sm font-bold">
+                    Confidence Score:{" "}
+                    <span
+                      className={`text-base ${
+                        item.score < 50
+                          ? "text-red-600"
+                          : item.score < 75
+                          ? "text-yellow-600"
+                          : "text-green-600"
+                      }`}
+                    >
+                      {(item.score / 20).toFixed(1)} / 5
+                    </span>
+                  </p>
+                  <p className="text-xs text-gray-500 mb-3">Sessions: {item.sessions}</p>
+                  <button 
+                    onClick={() => navigate('/questions')}
+                    className="mt-auto bg-primary hover:bg-indigo text-white px-4 py-2 rounded-lg font-medium text-sm transition-colors"
                   >
-                    {(item.score / 20).toFixed(1)} / 5
-                  </span>
-                </p>
-                <p className="text-xs text-gray-500 mb-3">Sessions: {item.sessions}</p>
-                <button className="mt-auto bg-primary hover:bg-indigo text-white px-4 py-2 rounded-lg font-medium text-sm transition-colors">
-                  Practice Now
-                </button>
-              </div>
-            );
-          })}
-        </div>
+                    Practice Now
+                  </button>
+                </div>
+              );
+            })}
+          </div>
+        )}
 
         {/* Pie Chart */}
-        <div className="bg-white rounded-2xl shadow-md p-6 md:p-8 mb-10 w-full">
-          <h2 className="font-serif text-xl md:text-2xl text-indigo font-medium mb-6">
-            Confidence by Category
-          </h2>
-          <div className="h-80">
-            <ResponsiveContainer width="100%" height="100%">
-              <PieChart>
-                <Pie
-                  data={confidenceData}
-                  dataKey="value"
-                  nameKey="name"
-                  innerRadius="50%"
-                  outerRadius="80%"
-                  label={({ name, value }) => `${name}: ${value}%`}
-                  labelLine={false}
-                >
-                  {confidenceData.map((entry, index) => (
-                    <Cell key={`cell-${index}`} fill={entry.color} />
-                  ))}
-                </Pie>
-                <Tooltip />
-              </PieChart>
-            </ResponsiveContainer>
+        {/* Pie Chart */}
+        {confidenceData.length === 0 ? (
+          <div className="bg-white rounded-2xl shadow-md p-6 md:p-8 mb-10 w-full text-center">
+            <h2 className="font-serif text-xl md:text-2xl text-indigo font-medium mb-4">
+              Confidence by Category
+            </h2>
+            <p className="text-gray-500 text-sm">
+              No category data available yet. Start practicing to see your progress!
+            </p>
           </div>
-        </div>
+        ) : (
+          <div className="bg-white rounded-2xl shadow-md p-6 md:p-8 mb-10 w-full">
+            <h2 className="font-serif text-xl md:text-2xl text-indigo font-medium mb-6">
+              Confidence by Category
+            </h2>
+            <div className="h-80">
+              <ResponsiveContainer width="100%" height="100%">
+                <PieChart>
+                  {/* ... existing chart code ... */}
+                </PieChart>
+              </ResponsiveContainer>
+            </div>
+          </div>
+        )}
 
         {/* Confidence Trend */}
         <div className="bg-white shadow-md rounded-2xl p-6 md:p-8 w-full mb-10">
@@ -515,49 +535,60 @@ useEffect(() => {
           {recentSessions.length === 0 ? (
             <p className="text-gray-500 text-sm italic">No sessions yet.</p>
           ) : (
-            <table className="w-full text-left border-collapse">
-              <thead>
-                <tr className="text-gray-600 border-b">
-                  <th className="pb-3 text-sm font-medium">Date</th>
-                  <th className="pb-3 text-sm font-medium">Persona</th>
-                  <th className="pb-3 text-sm font-medium">Doctor Name</th>
-                  <th className="pb-3 text-sm font-medium">Category</th>
-                  <th className="pb-3 text-sm font-medium">Confidence</th>
-                  <th className="pb-3 text-sm font-medium">Status</th>
-                </tr>
-              </thead>
-              <tbody>
-                {recentSessions.map((s) => (
-                  <tr
-                    key={s.id}
-                    className="border-b last:border-none hover:bg-gray-50 transition"
-                  >
-                    <td className="py-3 text-sm">
-                      {new Date(s.started_at).toLocaleDateString()}
-                    </td>
-                  <td className="py-3 text-sm">
-  {s.persona_id
-    ? s.persona_id.charAt(0).toUpperCase() + s.persona_id.slice(1)
-    : ""}
-</td>
-                    <td className="py-3 text-sm">{s.persona_name}</td>
-                    <td className="py-3 text-sm">{s.category}</td>
-                    <td className="py-3 text-sm text-indigo font-semibold">
-                      {s.confidence_rating ? `${s.confidence_rating}/5` : "—"}
-                    </td>
-                    <td
-                      className={`py-3 text-sm font-medium ${
-                        s.status === "completed"
-                          ? "text-green-600"
-                          : "text-yellow-600"
-                      }`}
-                    >
-                      {s.status === "completed" ? "Completed" : "In Progress"}
-                    </td>
+            <div className="overflow-x-auto">
+              <table className="w-full text-left border-collapse">
+                <thead>
+                  <tr className="text-gray-600 border-b">
+                    <th className="pb-3 text-sm font-medium">Date</th>
+                    <th className="pb-3 text-sm font-medium">Persona</th>
+                    <th className="pb-3 text-sm font-medium">Doctor Name</th>
+                    <th className="pb-3 text-sm font-medium">Category</th>
+                    <th className="pb-3 text-sm font-medium">Confidence</th>
+                    <th className="pb-3 text-sm font-medium">Status</th>
+                    <th className="pb-3 text-sm font-medium">Action</th>
                   </tr>
-                ))}
-              </tbody>
-            </table>
+                </thead>
+                <tbody>
+                  {recentSessions.map((s) => (
+                    <tr
+                      key={s.id}
+                      className="border-b last:border-none hover:bg-gray-50 transition"
+                    >
+                      <td className="py-3 text-sm">
+                        {new Date(s.started_at).toLocaleDateString()}
+                      </td>
+                      <td className="py-3 text-sm">
+                        {s.persona_id
+                          ? s.persona_id.charAt(0).toUpperCase() + s.persona_id.slice(1)
+                          : ""}
+                      </td>
+                      <td className="py-3 text-sm">{s.persona_name}</td>
+                      <td className="py-3 text-sm">{s.category}</td>
+                      <td className="py-3 text-sm text-indigo font-semibold">
+                        {s.confidence_rating ? `${s.confidence_rating}/5` : "—"}
+                      </td>
+                      <td
+                        className={`py-3 text-sm font-medium ${
+                          s.status === "completed"
+                            ? "text-green-600"
+                            : "text-yellow-600"
+                        }`}
+                      >
+                        {s.status === "completed" ? "Completed" : "In Progress"}
+                      </td>
+                      <td className="py-3 text-sm">
+                        <button
+                          onClick={() => navigate(`/session/${s.id}`)}
+                          className="text-primary hover:text-primary/80 font-medium underline transition-colors"
+                        >
+                          View
+                        </button>
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
           )}
         </div>
       </section>

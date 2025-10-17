@@ -9,10 +9,11 @@ import Dashboard from "./pages/Dashboard";
 import QuestionSelection from "./pages/QuestionSelectionPage";
 import Session from "./pages/Session";
 import SampleResponses from "./pages/SampleResponses";
-
 import PersonasPage from "./pages/PersonasPage";
 import PersonaDetailPage from "./pages/PersonaDetailPage";
 import ProfilePage from "./pages/ProfilePage";
+import SessionHistory from "./pages/SessionHistory";
+
 function App() {
   return (
     <Router>
@@ -30,6 +31,7 @@ function App() {
         <Route path="/personas" element={<PersonasPage />} />
         <Route path="/personas/:personaId" element={<PersonaDetailPage />} />
         <Route path="/profile" element={<ProfilePage />} />
+        <Route path="/session/:sessionId" element={<SessionHistory />} />
       </Routes>
     </Router>
   );
