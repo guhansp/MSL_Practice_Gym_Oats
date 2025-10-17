@@ -2,8 +2,10 @@ import React, { useEffect, useState } from "react";
 import NavBar from "../components/NavBar";
 import { fetchQuestions } from "../services/questionService";
 import API from "../services/api";
+import { useNavigate } from "react-router-dom";
 
 export default function QuestionSelection() {
+  const navigate = useNavigate();
   const [filters, setFilters] = useState({
     search: "",
     category: "All Categories",
@@ -22,7 +24,34 @@ export default function QuestionSelection() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
 
-  // --- Load all questions and personas ---
+  const handleStartPractice = async (question) => {
+    try {
+      const personaName = selectedPersonas[question.id];
+
+      if (!personaName || personaName === "—") {
+        alert("Please select a persona before starting practice.");
+        return;
+      }
+
+      const res = await API.post("/sessions", {
+        questionId: question.id,
+        personaId: personaName,
+      });
+
+      const session = res.data.session;
+
+      if (session?.id) {
+        navigate(`/session/${session.id}`, { state: session });
+      } else {
+        alert("Failed to create session");
+      }
+    } catch (err) {
+      console.error("Error starting practice:", err);
+      alert(err.response?.data?.error || "Failed to start practice session.");
+    }
+  };
+
+  // --- Load all questions and their personas ---
   useEffect(() => {
     const loadQuestions = async () => {
       try {
@@ -240,7 +269,9 @@ export default function QuestionSelection() {
                         ))}
                       </select>
                     ) : (
-                      <span className="text-xs text-gray-400 italic">No personas</span>
+                      <span className="text-xs text-gray-400 italic">
+                        No personas
+                      </span>
                     )}
                   </div>
 
@@ -253,13 +284,7 @@ export default function QuestionSelection() {
                   <div className="flex justify-center items-center">
                     <button
                       className="bg-primary hover:bg-indigo text-white text-sm font-medium px-4 py-1.5 rounded-md shadow-sm transition-all"
-                      onClick={() =>
-                        alert(
-                          `Starting practice for "${q.question}" as ${
-                            selectedPersonas[q.id] || "N/A"
-                          }`
-                        )
-                      }
+                      onClick={() => handleStartPractice(q)}
                     >
                       Practice
                     </button>

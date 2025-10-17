@@ -26,14 +26,21 @@ export default function Dashboard() {
   const [recentSessions, setRecentSessions] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
+  const [userName, setUserName] = useState("User");
+
+  
   const [timeRange, setTimeRange] = useState("1m");
   const [selectedCategory, setSelectedCategory] = useState("");
 
-  const userName = "Ashmiya";
+
 
   useEffect(() => {
     const loadDashboard = async () => {
       try {
+        const res = await fetchUserDashboard();
+        setDashboardData(res.progress); 
+            
+        setUserName(res.progress.first_name+" "+res.progress.last_name);
         const [dashboardRes, sessionsRes] = await Promise.all([
           fetchUserDashboard(),
           fetchUserSessions(),

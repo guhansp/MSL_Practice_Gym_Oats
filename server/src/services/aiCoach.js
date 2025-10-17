@@ -227,33 +227,63 @@ export async function generateConversationFeedback(sessionId, userId) {
     const question = sessionResult.rows[0]?.question || "";
     const personaName = sessionResult.rows[0]?.persona_name || "";
 
-    const resp = await openai.responses.create({
-      model: "gpt-4o-mini",
-      input: [
-        {
-          role: "system",
-          content:
-            "You are an expert MSL coach analyzing practice conversations. Provide constructive feedback.",
-        },
-        {
-          role: "user",
-          content: `Analyze this MSL practice conversation with ${personaName}.
+const resp = await openai.responses.create({
+  model: "gpt-4o-mini",
+  temperature: 0.2,            // lower = more consistent rule-following
+  max_output_tokens: 900,
+  input: [
+    {
+      role: "system",
+      content: [
+        "You are an expert MSL communication coach.",
+        "Speak to the user as 'you' (second-person). Never say 'the MSL'.",
+        "CRITICAL RULES:",
+        "1) FIRST: evaluate ONLY the user's most recent turn for clarity and relevance.",
+        "2) IF the latest turn is gibberish/off-topic: output the template with:",
+        "   - Strengths: 'None detected for this turn.'",
+        "   - Areas for Improvement: call out that input is gibberish/off-topic.",
+        "   - Key Suggestions: instruct how to restate clearly and address the question.",
+        "   - Overall Score: 1/10",
+        "   - Summary: directly tell the user their input was gibberish/off-topic.",
+        "   Then STOP. Do not invent strengths.",
+        "3) OTHERWISE (if not gibberish): evaluate normally.",
+      ].join("\n")
+    },
+    // few-shot: gibberish example
+    {
+      role: "user",
+      content: "asd asdflkjasd 123 !!!!"
+    },
+    {
+      role: "assistant",
+      content:
+        "**Strengths:**\n- None detected for this turn.\n\n" +
+        "**Areas for Improvement:**\n- Your input appears to be gibberish and not relevant to the question.\n\n" +
+        "**Key Suggestions:**\n- Restate your response using clear language and directly address the physician’s question.\n- Include relevant data or access points.\n\n" +
+        "**Overall Score:** 1/10  \n" +
+        "**Summary:** Your last response reads as gibberish/off-topic. Please provide a clear, relevant reply."
+    },
+    // now your real task
+    {
+      role: "user",
+      content: `Analyze this Medical Science Liaison (MSL) practice conversation between you (the MSL) and ${personaName}.
 
 Original Question: "${question}"
 
 Conversation Transcript:
 ${transcript}
 
-Provide feedback on:
-1. What the MSL did well
-2. What could be improved
-3. Specific suggestions for next time
-4. Overall effectiveness (rate 1-10)
+Provide feedback addressing the MSL directly as 'you'. Include:
 
-Format as:
+1. What you did well
+2. What you could improve
+3. Specific actionable suggestions for next time
+4. Your overall effectiveness score (rate 1–10)
+5. If the user's latest input is gibberish or off-topic, apply the CRITICAL RULES (score 1/10 and do not invent strengths).
 
-**Strengths:**
-[bullet points]
+Format the output exactly as:
+
+
 
 **Areas for Improvement:**
 [bullet points]
@@ -261,13 +291,16 @@ Format as:
 **Key Suggestions:**
 [bullet points]
 
-**Overall Score:** X/10
-**Summary:** [1-2 sentences]`,
-        },
-      ],
-      temperature: 0.7,
-      max_output_tokens: 1500,
-    });
+**Strengths:**
+[bullet points]
+
+**Overall Score:** X/10  
+**Summary:** [1–2 concise sentences speaking directly to the user]
+`
+    }
+  ]
+});
+
 
     const feedback = safeTextFromResponse(resp);
 

@@ -1,59 +1,67 @@
-
 import React, { useEffect, useRef, useState } from "react";
-
+import { Mic, Square } from "lucide-react";
 
 export default function SttButton({ onFinal }) {
   const [supported, setSupported] = useState(false);
   const [listening, setListening] = useState(false);
-  const [text, setText] = useState("");
   const recRef = useRef(null);
+  const bufferRef = useRef("");
 
   useEffect(() => {
     const SR = window.SpeechRecognition || window.webkitSpeechRecognition;
     if (!SR) return;
     const rec = new SR();
-    recRef.current = rec;
     rec.continuous = true;
     rec.interimResults = true;
     rec.lang = "en-US";
+
     rec.onresult = (e) => {
       let final = "";
       for (let i = e.resultIndex; i < e.results.length; i++) {
         const chunk = e.results[i][0].transcript;
         if (e.results[i].isFinal) final += chunk + " ";
       }
-      if (final) setText((prev) => (prev + final).trim());
+      if (final) bufferRef.current += final;
     };
-    rec.onend = () => setListening(false);
+
+    rec.onend = () => {
+      setListening(false);
+      if (bufferRef.current.trim()) {
+        onFinal?.(bufferRef.current.trim());
+        bufferRef.current = "";
+      }
+    };
+
+    recRef.current = rec;
     setSupported(true);
-  }, []);
+  }, [onFinal]);
 
   const start = () => {
     if (!recRef.current) return;
-    setText("");
+    bufferRef.current = "";
     recRef.current.start();
     setListening(true);
   };
-  const stop = () => recRef.current && recRef.current.stop();
 
-  if (!supported) return <div>Speech recognition not supported in this browser.</div>;
+  const stop = () => {
+    recRef.current && recRef.current.stop();
+  };
+
+  if (!supported) return null;
 
   return (
-    <div className="flex flex-col gap-3">
-      <div className="flex gap-2">
-        {!listening ? (
-          <button onClick={start}>🎙️ Start</button>
-        ) : (
-          <button onClick={stop}>■ Stop</button>
-        )}
-        {!listening && text && (
-          <button onClick={() => onFinal?.(text)}>Use Transcript</button>
-        )}
-        {!listening && text && (
-          <button onClick={() => setText("")}>Clear</button>
-        )}
-      </div>
-      <textarea value={text} readOnly rows={5} placeholder="Transcript..." />
-    </div>
+    <button
+      onClick={listening ? stop : start}
+      title={listening ? "Stop recording" : "Start recording"}
+      className={`p-3 rounded-xl transition ${
+        listening ? "bg-red-500 hover:bg-red-600" : "bg-gray-200 hover:bg-gray-300"
+      }`}
+    >
+      {listening ? (
+        <Square size={18} className="text-white" />
+      ) : (
+        <Mic size={18} className="text-gray-700" />
+      )}
+    </button>
   );
 }

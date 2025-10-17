@@ -1,18 +1,20 @@
 import { verifyToken } from "../middleware/authValidate.js";
-import pool from '../db/config.js';
+import pool from "../db/config.js";
 import express from "express";
 const router = express.Router();
 
-router.get("/userData", verifyToken, async (req, res) => {  
+router.get("/userData", verifyToken, async (req, res) => {
   try {
     const userId = req.user.userId;
     console.log("Fetching dashboard for user ID:", userId);
 
     const result = await pool.query(
-      "SELECT * FROM user_progress WHERE user_id = $1",
+      `SELECT up.*, u.first_name, u.last_name 
+   FROM user_progress as up 
+   LEFT JOIN users as u ON u.id = up.user_id 
+   WHERE up.user_id = $1`,
       [userId]
     );
-
     if (result.rows.length === 0)
       return res.status(204).json({ message: "No progress data found" });
 

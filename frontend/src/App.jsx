@@ -7,6 +7,7 @@ import ResetConfirmation from "./pages/ResetConfirmation";
 import ResetPassword from "./pages/ResetPassword";
 import Dashboard from "./pages/Dashboard";
 import QuestionSelection from "./pages/QuestionSelectionPage";
+import Session from "./pages/Session";
 import SampleResponses from "./pages/SampleResponses";
 
 import PersonasPage from "./pages/PersonasPage";
@@ -24,6 +25,7 @@ function App() {
         <Route path="/reset-password" element={<ResetPassword />} />
         <Route path="/dashboard" element={<Dashboard />} />
         <Route path="/questions" element={<QuestionSelection />} />
+        <Route path="/session/:sessionId" element={<Session />} />
          <Route path="/sample-answers" element={<SampleResponses />} />
         <Route path="/personas" element={<PersonasPage />} />
         <Route path="/personas/:personaId" element={<PersonaDetailPage />} />
