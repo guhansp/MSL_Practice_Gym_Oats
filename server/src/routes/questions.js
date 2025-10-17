@@ -6,12 +6,34 @@ const router = express.Router();
 
 router.get("/", async (req, res) => {
   try {
-    const result = await pool.query(
-      "SELECT id, category, question, difficulty, context, tags, key_themes, estimated_response_time, is_active FROM questions WHERE is_active = TRUE ORDER BY id"
-    );
+    const query = `
+      SELECT 
+        q.id,
+        q.category,
+        q.question,
+        q.difficulty,
+        q.context,
+        q.tags,
+        q.key_themes,
+        q.estimated_response_time,
+        q.is_active,
+        COALESCE(
+          json_agg(qp.persona_id ORDER BY qp.persona_id)
+          FILTER (WHERE qp.persona_id IS NOT NULL),
+          '[]'
+        ) AS personas
+      FROM questions q
+      LEFT JOIN question_personas qp ON q.id = qp.question_id
+      WHERE q.is_active = TRUE
+      GROUP BY q.id
+      ORDER BY q.id;
+    `;
+
+    const result = await pool.query(query);
+
     res.status(200).json({
       message: "Questions loaded successfully",
-      total: result.rows.length,
+      total: result.rowCount,
       data: result.rows,
     });
   } catch (err) {
