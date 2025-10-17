@@ -33,29 +33,49 @@ export default function Dashboard() {
   const [selectedCategory, setSelectedCategory] = useState("");
 
 
+// At the top of your component, add default values
+const defaultDashboard = {
+  total_sessions: 0,
+  total_practice_time_seconds: 0,
+  current_streak_days: 0,
+  persona_stats: {},
+  category_stats: {},
+  confidence_trend: [],
+  first_name: "User",
+  last_name: ""
+};
 
-  useEffect(() => {
-    const loadDashboard = async () => {
-      try {
-        const res = await fetchUserDashboard();
-        setDashboardData(res.progress); 
-            
-        setUserName(res.progress.first_name+" "+res.progress.last_name);
-        const [dashboardRes, sessionsRes] = await Promise.all([
-          fetchUserDashboard(),
-          fetchUserSessions(),
-        ]);
+// In your useEffect
+useEffect(() => {
+  const loadDashboard = async () => {
+    try {
+      const [dashboardRes, sessionsRes] = await Promise.all([
+        fetchUserDashboard(),
+        fetchUserSessions(),
+      ]);
 
-        setDashboardData(dashboardRes.progress);
-        setRecentSessions(sessionsRes);
-      } catch (err) {
-        setError(err.response?.data?.message || "Failed to load dashboard");
-      } finally {
-        setLoading(false);
-      }
-    };
-    loadDashboard();
-  }, []);
+      // Merge with defaults to ensure all properties exist
+      setDashboardData({
+        ...defaultDashboard,
+        ...dashboardRes.progress
+      });
+      
+      setUserName(
+        `${dashboardRes.progress.first_name || "User"} ${dashboardRes.progress.last_name || ""}`.trim()
+      );
+      setRecentSessions(sessionsRes || []);
+    } catch (err) {
+      console.error("Dashboard load error:", err);
+      setError(err.response?.data?.message || "Failed to load dashboard");
+      // Set default data even on error so page doesn't crash
+      setDashboardData(defaultDashboard);
+    } finally {
+      setLoading(false);
+    }
+  };
+  loadDashboard();
+}, []);
+
 
   const getColorForConfidence = (value) => {
     if (value === 0) return "bg-gray-200";
