@@ -36,8 +36,8 @@ export default function SignIn() {
       <Navbar />
 
       <section
-        className="min-h-[85vh] bg-grayAccent flex flex-col items-center justify-center font-sans px-4"
-        style={{
+    className="min-h-[85vh] bg-grayAccent flex flex-col items-center justify-center font-sans px-4"
+      style={{
           backgroundImage: `url(${pattern})`,
           backgroundRepeat: "repeat",
           backgroundSize: "contain",

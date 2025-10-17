@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import NavBar from "../components/NavBar";
+import pattern from "../assets/pattern.png";
 import { getAllPersonas } from "../services/personaService";
 
 export default function PersonasPage() {
@@ -72,7 +73,12 @@ export default function PersonasPage() {
     <>
       <NavBar />
 
-      <section className="min-h-screen bg-grayAccent px-6 py-10 font-sans">
+      <section className="min-h-screen bg-grayAccent px-6 py-10 font-sans"
+         style={{
+                  backgroundImage: `url(${pattern})`,
+                  backgroundRepeat: "repeat",
+                  backgroundSize: "contain",
+                }}>
         {/* --- Header --- */}
         <div className="mb-10">
           <h1 className="text-3xl md:text-3xl font-serif text-indigo mb-3">
@@ -87,7 +93,7 @@ export default function PersonasPage() {
         {/* --- Info Banner --- */}
         <div className="bg-white rounded-xl shadow-md p-6 mb-10 border-l-4 border-primary">
           <div>
-            <h3 className="font-semibold text-primary text-lg mb-2 font-serif">
+            <h3 className="font-semibold text-indigo text-lg mb-2 font-serif">
               Understanding Physician Personas
             </h3>
             <p className="text-graphite text-base leading-relaxed">
