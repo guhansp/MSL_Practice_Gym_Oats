@@ -1,6 +1,21 @@
 import React, { useEffect, useState } from "react";
 import NavBar from "../components/NavBar";
-import { PieChart, Pie, Cell, Tooltip, ResponsiveContainer } from "recharts";
+import {
+  PieChart,
+  Pie,
+  Cell,
+  Tooltip,
+  ResponsiveContainer,
+  CartesianGrid,
+  XAxis,
+  YAxis,
+  Legend,
+  BarChart,
+  Bar,
+  ComposedChart,
+  Line,
+  Rectangle,
+} from "recharts";
 import { Flame } from "lucide-react";
 import { fetchUserDashboard, fetchUserSessions } from "../services/dashboardService";
 
@@ -10,6 +25,7 @@ export default function Dashboard() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
   const [timeRange, setTimeRange] = useState("1m");
+  const [selectedCategory, setSelectedCategory] = useState("");
 
   const userName = "Ashmiya";
 
@@ -21,7 +37,6 @@ export default function Dashboard() {
           fetchUserSessions(),
         ]);
 
-        // ✅ Your backend returns { progress: { total_sessions, ... } }
         setDashboardData(dashboardRes.progress);
         setRecentSessions(sessionsRes);
       } catch (err) {
@@ -42,7 +57,6 @@ export default function Dashboard() {
     return "bg-blue-700";
   };
 
-  // ✅ Using your exact key names
   const totalSessions = dashboardData?.total_sessions || 0;
   const totalSeconds = dashboardData?.total_practice_time_seconds || 0;
   const totalMinutes = Math.floor(totalSeconds / 60);
@@ -50,7 +64,7 @@ export default function Dashboard() {
   const remainingMinutes = totalMinutes % 60;
   const currentStreak = dashboardData?.current_streak_days || 0;
 
-  // ✅ Persona cards — persona_stats
+  // Persona Cards
   const scores = dashboardData?.persona_stats
     ? Object.entries(dashboardData.persona_stats).map(([persona, stats], i) => ({
         id: i + 1,
@@ -60,7 +74,7 @@ export default function Dashboard() {
       }))
     : [];
 
-  // ✅ Category chart — category_stats
+  // Category Pie Chart
   const confidenceData = dashboardData?.category_stats
     ? Object.entries(dashboardData.category_stats).map(([category, stats], i) => ({
         name: category,
@@ -69,14 +83,14 @@ export default function Dashboard() {
       }))
     : [];
 
-  // ✅ Confidence trend (0–5 scale)
+  // Confidence Trend
   const confidenceTrend = dashboardData?.confidence_trend || [];
   const formattedTrend = confidenceTrend.map((t) => ({
     date: new Date(t.date),
     confidence: t.avg_confidence,
   }));
 
-  // Build GitHub-style heatmap (week-wise)
+  // Build heatmap grid
   const buildHeatmapGrid = () => {
     const today = new Date();
     const cutoff = new Date(today);
@@ -125,6 +139,37 @@ export default function Dashboard() {
 
   const monthLabels = getMonthLabels();
 
+  // Category dropdown for heatmap
+  const allCategories = [...new Set(confidenceTrend.map((item) => item.category))];
+  useEffect(() => {
+    if (!selectedCategory && allCategories.length > 0) {
+      setSelectedCategory(allCategories[0]);
+    }
+  }, [allCategories, selectedCategory]);
+
+  const categoryTrend =
+    confidenceTrend.filter((c) => c.category === selectedCategory) || [];
+
+  const categoryHeatmapData = categoryTrend.map((t) => ({
+    date: new Date(t.date).toLocaleDateString(),
+    confidence: t.avg_confidence,
+  }));
+
+  // Performance Comparison
+  const performanceComparison = scores.map((s) => ({
+    persona: s.title,
+    confidence: s.score / 20, // Convert back to 0–5 scale
+    sessions: s.sessions,
+  }));
+
+  // Goal tracking
+  const avgConfidence =
+    formattedTrend.reduce((a, b) => a + b.confidence, 0) /
+      (formattedTrend.length || 1) || 0;
+  const goalProgress = Math.min(Math.round((avgConfidence / 5) * 100), 100);
+  const goalTarget = 80;
+  const goalAchieved = goalProgress >= goalTarget;
+
   if (loading)
     return (
       <div className="min-h-screen flex items-center justify-center text-gray-500 font-medium">
@@ -149,7 +194,7 @@ export default function Dashboard() {
           Welcome, <span className="text-primary">{userName}</span>
         </h1>
 
-        {/* --- Summary Metrics --- */}
+        {/* Summary Metrics */}
         <div className="grid grid-cols-1 sm:grid-cols-3 gap-6 mb-10">
           <MetricCard title="Total Sessions Completed" value={totalSessions} color="text-primary" />
           <MetricCard
@@ -168,7 +213,7 @@ export default function Dashboard() {
           />
         </div>
 
-        {/* --- Persona Scores (Full Row Stretch) --- */}
+        {/* Persona Scores */}
         <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-3 gap-6 mb-12 w-full">
           {scores.map((item) => {
             const label =
@@ -191,9 +236,7 @@ export default function Dashboard() {
                     {label}
                   </div>
                 </div>
-                <h2 className="text-lg font-medium text-indigo mb-2">
-                  {item.title}
-                </h2>
+                <h2 className="text-lg font-medium text-indigo mb-2">{item.title}</h2>
                 <p className="text-sm font-bold">
                   Confidence Score:{" "}
                   <span
@@ -205,12 +248,10 @@ export default function Dashboard() {
                         : "text-green-600"
                     }`}
                   >
-                    {item.score}%
+                    {(item.score / 20).toFixed(1)} / 5
                   </span>
                 </p>
-                <p className="text-xs text-gray-500 mb-3">
-                  Sessions: {item.sessions}
-                </p>
+                <p className="text-xs text-gray-500 mb-3">Sessions: {item.sessions}</p>
                 <button className="mt-auto bg-primary hover:bg-indigo text-white px-4 py-2 rounded-lg font-medium text-sm transition-colors">
                   Practice Now
                 </button>
@@ -219,7 +260,7 @@ export default function Dashboard() {
           })}
         </div>
 
-        {/* --- Category Chart --- */}
+        {/* Pie Chart */}
         <div className="bg-white rounded-2xl shadow-md p-6 md:p-8 mb-10 w-full">
           <h2 className="font-serif text-xl md:text-2xl text-indigo font-medium mb-6">
             Confidence by Category
@@ -246,7 +287,7 @@ export default function Dashboard() {
           </div>
         </div>
 
-        {/* --- Confidence Trend --- */}
+        {/* Confidence Trend */}
         <div className="bg-white shadow-md rounded-2xl p-6 md:p-8 w-full mb-10">
           <div className="flex flex-wrap items-center justify-between mb-6">
             <h2 className="font-serif text-xl md:text-2xl text-indigo font-medium">
@@ -273,7 +314,6 @@ export default function Dashboard() {
             </div>
           </div>
 
-          {/* Heatmap */}
           <div className="flex flex-col items-center">
             <div className="flex justify-start gap-[3px] mb-2 text-xs text-gray-500 w-full pl-6">
               {monthLabels.map((m) => (
@@ -301,18 +341,118 @@ export default function Dashboard() {
               ))}
             </div>
           </div>
+        </div>
 
-          <div className="flex justify-center gap-2 mt-4 text-xs text-gray-600 items-center">
-            <span className="h-4 w-4 bg-gray-200 rounded-sm"></span> 0
-            <span className="h-4 w-4 bg-blue-200 rounded-sm"></span> 1
-            <span className="h-4 w-4 bg-blue-300 rounded-sm"></span> 2
-            <span className="h-4 w-4 bg-blue-400 rounded-sm"></span> 3
-            <span className="h-4 w-4 bg-blue-500 rounded-sm"></span> 4
-            <span className="h-4 w-4 bg-blue-700 rounded-sm"></span> 5
+        {/* Category Strength Heatmap (Dropdown + Bars) */}
+        <div className="bg-white rounded-2xl shadow-md p-6 md:p-8 mb-10 w-full">
+          <div className="flex items-center justify-between mb-6 flex-wrap gap-3">
+            <h2 className="font-serif text-xl md:text-2xl text-indigo font-medium">
+              Category Strength Heatmap
+            </h2>
+
+            <select
+              value={selectedCategory}
+              onChange={(e) => setSelectedCategory(e.target.value)}
+              className="border border-gray-300 rounded-md px-3 py-2 text-sm text-gray-700 focus:outline-none focus:ring-2 focus:ring-indigo"
+            >
+              {allCategories.map((cat) => (
+                <option key={cat} value={cat}>
+                  {cat}
+                </option>
+              ))}
+            </select>
+          </div>
+
+          {categoryHeatmapData.length === 0 ? (
+            <p className="text-gray-500 text-sm italic">
+              No data available for this category.
+            </p>
+          ) : (
+            <div className="h-80">
+              <ResponsiveContainer width="100%" height="100%">
+                <BarChart data={categoryHeatmapData}>
+                  <XAxis dataKey="date" tick={{ fontSize: 11 }} />
+                  <YAxis domain={[0, 5]} tickCount={6} />
+                  <Tooltip />
+                  <Bar
+                    dataKey="confidence"
+                    shape={(props) => {
+                      const { x, y, width, height, payload } = props;
+                      const shades = [
+                        "#E0ECFF",
+                        "#A8D0FF",
+                        "#72B6FF",
+                        "#3C9DFF",
+                        "#0077E6",
+                        "#005BB5",
+                      ];
+                      const shade = shades[Math.round(payload.confidence)] || "#E0ECFF";
+                      return (
+                        <Rectangle
+                          x={x}
+                          y={y}
+                          width={width}
+                          height={height}
+                          fill={shade}
+                          radius={[2, 2, 0, 0]}
+                        />
+                      );
+                    }}
+                  />
+                </BarChart>
+              </ResponsiveContainer>
+            </div>
+          )}
+        </div>
+
+        {/* Performance Comparison (Composite Chart 0–5 Scale) */}
+        <div className="bg-white rounded-2xl shadow-md p-6 md:p-8 mb-10 w-full">
+          <h2 className="font-serif text-xl md:text-2xl text-indigo font-medium mb-6">
+            Performance Comparison
+          </h2>
+          <ResponsiveContainer width="100%" height={320}>
+            <ComposedChart data={performanceComparison}>
+              <CartesianGrid strokeDasharray="3 3" />
+              <XAxis dataKey="persona" tick={{ fontSize: 12 }} />
+              <YAxis yAxisId="left" orientation="left" label={{ value: "Sessions", angle: -90, position: "insideLeft" }} />
+              <YAxis yAxisId="right" orientation="right" domain={[0, 5]} label={{ value: "Confidence (0–5)", angle: 90, position: "insideRight" }} />
+              <Tooltip />
+              <Legend />
+              <Bar yAxisId="left" dataKey="sessions" fill="#5AC8FA" barSize={40} name="Sessions" />
+              <Line yAxisId="right" type="monotone" dataKey="confidence" stroke="#0077E6" strokeWidth={3} dot={{ r: 4 }} activeDot={{ r: 6 }} name="Confidence (0–5)" />
+            </ComposedChart>
+          </ResponsiveContainer>
+        </div>
+
+        {/* Goal Achievement */}
+        <div className="bg-white rounded-2xl shadow-md p-6 md:p-8 mb-16 w-full text-center">
+          <h2 className="font-serif text-xl md:text-2xl text-indigo font-medium mb-6">
+            Goal Achievement Tracking
+          </h2>
+          <div className="w-full max-w-lg mx-auto">
+            <div className="h-6 bg-gray-200 rounded-full overflow-hidden mb-3">
+              <div
+                className={`h-6 rounded-full transition-all duration-500 ${
+                  goalAchieved ? "bg-green-500" : "bg-primary"
+                }`}
+                style={{ width: `${goalProgress}%` }}
+              ></div>
+            </div>
+            <p className="text-sm text-gray-600">
+              Progress: <span className="font-semibold">{goalProgress}%</span> of target{" "}
+              <span className="font-semibold">{goalTarget}%</span>
+            </p>
+            <p
+              className={`mt-2 font-semibold ${
+                goalAchieved ? "text-green-600" : "text-indigo"
+              }`}
+            >
+              {goalAchieved ? "🎯 Goal Achieved!" : "Keep going — you're almost there!"}
+            </p>
           </div>
         </div>
 
-        {/* --- Recent Sessions --- */}
+        {/* Session History */}
         <div className="bg-white rounded-2xl shadow-md p-6 md:p-8 w-full mb-16">
           <h2 className="font-serif text-xl md:text-2xl text-indigo font-medium mb-6">
             Recent Session History
