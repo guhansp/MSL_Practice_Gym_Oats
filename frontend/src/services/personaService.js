@@ -1,4 +1,4 @@
-import API from "./api";
+import API from './api';
 
 export const getAllPersonas = async () => {
   try {
@@ -21,5 +21,13 @@ export const getPersonaById = async (personaId) => {
   }
 };
 
-
-export default API;
+// Get questions for a specific persona
+export const getQuestionsByPersona = async (personaId) => {
+  try {
+    const response = await API.get(`/data/questions?persona_id=${personaId}`);
+    return response.data;
+  } catch (error) {
+    console.error("Error fetching questions for persona:", error);
+    throw error;
+  }
+};
