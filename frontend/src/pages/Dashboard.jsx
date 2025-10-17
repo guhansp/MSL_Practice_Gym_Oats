@@ -500,6 +500,7 @@ export default function Dashboard() {
                 <tr className="text-gray-600 border-b">
                   <th className="pb-3 text-sm font-medium">Date</th>
                   <th className="pb-3 text-sm font-medium">Persona</th>
+                  <th className="pb-3 text-sm font-medium">Doctor Name</th>
                   <th className="pb-3 text-sm font-medium">Category</th>
                   <th className="pb-3 text-sm font-medium">Confidence</th>
                   <th className="pb-3 text-sm font-medium">Status</th>
@@ -514,6 +515,11 @@ export default function Dashboard() {
                     <td className="py-3 text-sm">
                       {new Date(s.started_at).toLocaleDateString()}
                     </td>
+                  <td className="py-3 text-sm">
+  {s.persona_id
+    ? s.persona_id.charAt(0).toUpperCase() + s.persona_id.slice(1)
+    : ""}
+</td>
                     <td className="py-3 text-sm">{s.persona_name}</td>
                     <td className="py-3 text-sm">{s.category}</td>
                     <td className="py-3 text-sm text-indigo font-semibold">

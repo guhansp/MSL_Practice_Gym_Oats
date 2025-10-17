@@ -90,7 +90,7 @@ export default function SignIn() {
               />
             </div>
 
-            <div className="flex items-center justify-between text-sm">
+            {/* <div className="flex items-center justify-between text-sm">
               <label className="flex items-center gap-2">
                 <input
                   type="checkbox"
@@ -106,7 +106,7 @@ export default function SignIn() {
               >
                 Forgot password?
               </a>
-            </div>
+            </div> */}
 
             <button
               type="submit"
