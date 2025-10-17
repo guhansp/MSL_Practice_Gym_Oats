@@ -4,10 +4,9 @@ import { verifyToken } from "../middleware/authValidate.js";
 
 const router = express.Router();
 
-
 router.post("/", verifyToken, async (req, res) => {
   const { questionId, personaId } = req.body;
-   const userId = req.user.userId;
+  const userId = req.user.userId;
   console.log("Create session request:", req.user);
 
   try {
@@ -62,7 +61,7 @@ router.post("/", verifyToken, async (req, res) => {
   }
 });
 
-router.get("/",verifyToken, async (req, res) => {
+router.get("/", verifyToken, async (req, res) => {
   const userId = req.user.userId;
   try {
     const result = await pool.query(
@@ -101,8 +100,7 @@ router.get("/",verifyToken, async (req, res) => {
   }
 });
 
-
-router.get("/session/:id",verifyToken, async (req, res) => {
+router.get("/session/:id", verifyToken, async (req, res) => {
   try {
     const userId = req.user.userId;
     const { id } = req.params;
@@ -138,8 +136,7 @@ router.get("/session/:id",verifyToken, async (req, res) => {
   }
 });
 
-
-router.patch("/:id/complete",verifyToken, async (req, res) => {
+router.patch("/:id/complete", verifyToken, async (req, res) => {
   const { id } = req.params;
   const {
     confidenceRating,
@@ -186,18 +183,15 @@ router.patch("/:id/complete",verifyToken, async (req, res) => {
   }
 });
 
-
-router.get("/statsall",verifyToken, async (req, res) => {
- 
+router.get("/statsall", verifyToken, async (req, res) => {
   try {
     const userId = req.user.userId;
-    
+
     // Total sessions
     const totalResult = await pool.query(
       "SELECT COUNT(*) as total FROM practice_sessions WHERE user_id = $1",
       [userId]
     );
-   
 
     // Completed sessions
     const completedResult = await pool.query(
@@ -209,39 +203,71 @@ router.get("/statsall",verifyToken, async (req, res) => {
 
     // Average confidence
     const avgResult = await pool.query(
-      `SELECT AVG(confidence_rating)::numeric(10,2) as avg_confidence 
-       FROM practice_sessions 
-       WHERE user_id = $1 AND completed_at IS NOT NULL AND confidence_rating IS NOT NULL`,
+      `SELECT 
+      ROUND(
+        AVG(
+          (COALESCE(clarity_score, 0) + 
+           COALESCE(variability_score, 0) + 
+           COALESCE(polarity_score, 0)) / 3.0
+        ) / 2.0, 
+      2) AS avg_confidence
+   FROM practice_sessions
+   WHERE user_id = $1 
+     AND completed_at IS NOT NULL 
+     AND clarity_score IS NOT NULL 
+     AND variability_score IS NOT NULL 
+     AND polarity_score IS NOT NULL`,
       [userId]
     );
 
-    // Category breakdown
-    const categoryResult = await pool.query(
-      `SELECT 
-         q.category,
-         COUNT(*) as count,
-         AVG(ps.confidence_rating)::numeric(10,2) as avg_confidence
-       FROM practice_sessions ps
-       JOIN questions q ON ps.question_id = q.id
-       WHERE ps.user_id = $1 AND ps.completed_at IS NOT NULL
-       GROUP BY q.category
-       ORDER BY q.category`,
-      [req.userId]
-    );
+    // --- Category Breakdown ---
+const categoryResult = await pool.query(
+  `SELECT 
+     q.category,
+     COUNT(*) AS count,
+     ROUND(
+       AVG(
+         (COALESCE(ps.clarity_score, 0) +
+          COALESCE(ps.variability_score, 0) +
+          COALESCE(ps.polarity_score, 0)) / 3.0
+       ) / 2.0, 
+     2) AS avg_confidence
+   FROM practice_sessions ps
+   JOIN questions q ON ps.question_id = q.id
+   WHERE ps.user_id = $1 
+     AND ps.completed_at IS NOT NULL 
+     AND ps.clarity_score IS NOT NULL 
+     AND ps.variability_score IS NOT NULL 
+     AND ps.polarity_score IS NOT NULL
+   GROUP BY q.category
+   ORDER BY q.category`,
+  [userId]
+);
 
-    // Persona breakdown
-    const personaResult = await pool.query(
-      `SELECT 
-         ps.persona_id,
-         p.name as persona_name,
-         COUNT(*) as count,
-         AVG(ps.confidence_rating)::numeric(10,2) as avg_confidence
-       FROM practice_sessions ps
-       JOIN personas p ON ps.persona_id = p.id
-       WHERE ps.user_id = $1 AND ps.completed_at IS NOT NULL
-       GROUP BY ps.persona_id, p.name`,
-      [req.userId]
-    );
+// --- Persona Breakdown ---
+const personaResult = await pool.query(
+  `SELECT 
+     ps.persona_id,
+     p.name AS persona_name,
+     COUNT(*) AS count,
+     ROUND(
+       AVG(
+         (COALESCE(ps.clarity_score, 0) +
+          COALESCE(ps.variability_score, 0) +
+          COALESCE(ps.polarity_score, 0)) / 3.0
+       ) / 2.0, 
+     2) AS avg_confidence
+   FROM practice_sessions ps
+   JOIN personas p ON ps.persona_id = p.id
+   WHERE ps.user_id = $1 
+     AND ps.completed_at IS NOT NULL 
+     AND ps.clarity_score IS NOT NULL 
+     AND ps.variability_score IS NOT NULL 
+     AND ps.polarity_score IS NOT NULL
+   GROUP BY ps.persona_id, p.name
+   ORDER BY p.name`,
+  [userId]
+);
 
     // Calculate streak
     const streakResult = await pool.query(
@@ -275,10 +301,14 @@ router.get("/statsall",verifyToken, async (req, res) => {
 
     // Total practice time
     const timeResult = await pool.query(
-      `SELECT SUM(recording_duration_seconds)::integer as total_seconds
-       FROM practice_sessions
-       WHERE user_id = $1 AND completed_at IS NOT NULL`,
-      [req.userId]
+      `SELECT
+      ROUND(SUM(EXTRACT(EPOCH FROM (completed_at - started_at)))) AS total_seconds,
+      ROUND(AVG(EXTRACT(EPOCH FROM (completed_at - started_at)))) AS avg_seconds
+   FROM practice_sessions
+   WHERE user_id = $1
+     AND completed_at IS NOT NULL
+     AND started_at IS NOT NULL`,
+      [userId]
     );
 
     res.json({

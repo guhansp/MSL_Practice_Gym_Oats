@@ -42,6 +42,7 @@ export default function ProfilePage() {
         firstName: userData.first_name || userData.firstName || "",
         lastName: userData.last_name || userData.lastName || "",
         organization: userData.organization || "",
+        lastLoginAt: userData.lastLoginAt || null,
       });
     } catch (err) {
       setError(err.response?.data?.error || "Failed to load profile");
@@ -86,6 +87,7 @@ export default function ProfilePage() {
         firstName: formData.firstName,
         lastName: formData.lastName,
         organization: formData.organization,
+        lastLoginAt: formData.lastLoginAt,
       });
       setUser(response.data.user);
       setIsEditing(false);
@@ -123,7 +125,9 @@ export default function ProfilePage() {
       setSuccessMessage("Password changed successfully");
       setTimeout(() => setSuccessMessage(""), 3000);
     } catch (err) {
-      setPasswordError(err.response?.data?.error || "Failed to change password");
+      setPasswordError(
+        err.response?.data?.error || "Failed to change password"
+      );
     }
   };
 
@@ -222,27 +226,20 @@ export default function ProfilePage() {
                       </p>
                     </div>
                   ))}
-                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                  <div className=" gap-4">
                     <div className="bg-grayLight border border-grayNeutral p-4 rounded-lg">
                       <p className="text-xs text-graphite uppercase tracking-wide mb-2 font-semibold">
                         Member Since
                       </p>
                       <p className="text-primary font-medium text-base">
                         {user?.created_at || user?.createdAt
-                          ? new Date(user.created_at || user.createdAt).toLocaleDateString()
+                          ? new Date(
+                              user.created_at || user.createdAt
+                            ).toLocaleDateString()
                           : "N/A"}
                       </p>
                     </div>
-                    <div className="bg-grayLight border border-grayNeutral p-4 rounded-lg">
-                      <p className="text-xs text-graphite uppercase tracking-wide mb-2 font-semibold">
-                        Last Login
-                      </p>
-                      <p className="text-primary font-medium text-base">
-                        {user?.last_login_at || user?.lastLoginAt
-                          ? new Date(user.last_login_at || user.lastLoginAt).toLocaleDateString()
-                          : "N/A"}
-                      </p>
-                    </div>
+                   
                   </div>
                 </div>
               ) : (
@@ -295,6 +292,7 @@ export default function ProfilePage() {
                           firstName: user?.first_name || user?.firstName || "",
                           lastName: user?.last_name || user?.lastName || "",
                           organization: user?.organization || "",
+                           lastLoginAt: userData.lastLoginAt || null
                         });
                       }}
                       className="flex-1 bg-graphite hover:bg-graphite/90 text-white px-6 py-3 rounded-lg font-medium"
@@ -385,7 +383,7 @@ export default function ProfilePage() {
                 </form>
               )}
             </div>*/}
-          </div> 
+          </div>
 
           {/* --- Right Column: Stats & Actions --- */}
           <div className="lg:col-span-1 space-y-6">
@@ -395,8 +393,15 @@ export default function ProfilePage() {
                 Your Statistics
               </h3>
               <div className="space-y-4">
-                <StatBox label="Total Sessions" value={stats?.totalSessions || 0} />
-                <StatBox label="Current Streak" value={stats?.currentStreak || 0} suffix="days" />
+                <StatBox
+                  label="Total Sessions"
+                  value={stats?.totalSessions || 0}
+                />
+                <StatBox
+                  label="Current Streak"
+                  value={stats?.currentStreak || 0}
+                  suffix="days"
+                />
                 <StatBox
                   label="Avg Confidence"
                   value={stats?.avgConfidence?.toFixed(1) || "0.0"}
@@ -404,9 +409,7 @@ export default function ProfilePage() {
                 />
                 <StatBox
                   label="Practice Time"
-                  value={
-                    stats?.totalPracticeTimeSeconds                     
-                  }
+                  value={stats?.totalPracticeTimeSeconds}
                   suffix="seconds"
                 />
               </div>
@@ -479,7 +482,9 @@ export default function ProfilePage() {
                           <span className="text-primary font-semibold">
                             {parseFloat(cat.avg_confidence || 0).toFixed(1)}
                           </span>
-                          <span className="text-graphite text-xs ml-1">/ 5.0</span>
+                          <span className="text-graphite text-xs ml-1">
+                            / 5.0
+                          </span>
                         </td>
                       </tr>
                     ))}
@@ -514,7 +519,9 @@ export default function ProfilePage() {
                         </p>
                       </div>
                       <div className="text-right">
-                        <p className="text-xs text-graphite mb-1">Avg Confidence</p>
+                        <p className="text-xs text-graphite mb-1">
+                          Avg Confidence
+                        </p>
                         <p className="text-2xl font-bold text-primary">
                           {parseFloat(persona.avg_confidence || 0).toFixed(1)}
                         </p>
