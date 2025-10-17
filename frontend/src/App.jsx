@@ -6,6 +6,7 @@ import ForgotPassword from "./pages/ForgotPassword";
 import ResetConfirmation from "./pages/ResetConfirmation";
 import ResetPassword from "./pages/ResetPassword";
 import Dashboard from "./pages/Dashboard";
+import QuestionSelection from "./pages/QuestionSelectionPage";
 
 function App() {
   return (
