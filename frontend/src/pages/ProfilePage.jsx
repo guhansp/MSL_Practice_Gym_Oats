@@ -405,11 +405,9 @@ export default function ProfilePage() {
                 <StatBox
                   label="Practice Time"
                   value={
-                    stats?.totalPracticeTimeSeconds
-                      ? Math.floor(stats.totalPracticeTimeSeconds / 60)
-                      : 0
+                    stats?.totalPracticeTimeSeconds                     
                   }
-                  suffix="minutes"
+                  suffix="seconds"
                 />
               </div>
             </div>
