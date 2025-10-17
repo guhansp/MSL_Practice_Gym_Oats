@@ -2,8 +2,10 @@ import React, { useEffect, useState } from "react";
 import NavBar from "../components/NavBar";
 import { fetchQuestions } from "../services/questionService";
 import API from "../services/api";
+import { useNavigate } from "react-router-dom";
 
 export default function QuestionSelection() {
+  const navigate = useNavigate();
   const [filters, setFilters] = useState({
     search: "",
     category: "All",
@@ -15,6 +17,33 @@ export default function QuestionSelection() {
   const [selectedPersonas, setSelectedPersonas] = useState({});
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
+
+  const handleStartPractice = async (question) => {
+    try {
+      const personaName = selectedPersonas[question.id];
+
+      if (!personaName || personaName === "—") {
+        alert("Please select a persona before starting practice.");
+        return;
+      }
+
+      const res = await API.post("/sessions", {
+        questionId: question.id,
+        personaId: personaName,
+      });
+
+      const session = res.data.session;
+
+      if (session?.id) {
+        navigate(`/session/${session.id}`, { state: session });
+      } else {
+        alert("Failed to create session");
+      }
+    } catch (err) {
+      console.error("Error starting practice:", err);
+      alert(err.response?.data?.error || "Failed to start practice session.");
+    }
+  };
 
   // --- Load all questions and their personas ---
   useEffect(() => {
@@ -56,9 +85,13 @@ export default function QuestionSelection() {
 
   // --- Filters ---
   const filteredQuestions = questions.filter((q) => {
-    const matchSearch = q.question?.toLowerCase().includes(filters.search.toLowerCase());
-    const matchCategory = filters.category === "All" || q.category === filters.category;
-    const matchDifficulty = filters.difficulty === "All" || q.difficulty === filters.difficulty;
+    const matchSearch = q.question
+      ?.toLowerCase()
+      .includes(filters.search.toLowerCase());
+    const matchCategory =
+      filters.category === "All" || q.category === filters.category;
+    const matchDifficulty =
+      filters.difficulty === "All" || q.difficulty === filters.difficulty;
     return matchSearch && matchCategory && matchDifficulty;
   });
 
@@ -98,7 +131,9 @@ export default function QuestionSelection() {
 
           <select
             className="border border-gray-300 rounded-lg px-3 py-2 w-40 focus:ring-2 focus:ring-primary"
-            onChange={(e) => setFilters({ ...filters, category: e.target.value })}
+            onChange={(e) =>
+              setFilters({ ...filters, category: e.target.value })
+            }
           >
             <option value="All">All Categories</option>
             <option value="Behavioral">Behavioral</option>
@@ -106,12 +141,16 @@ export default function QuestionSelection() {
             <option value="Leadership">Leadership</option>
             <option value="Communication">Communication</option>
             <option value="Cost & Value">Cost & Value</option>
-            <option value="Clinical Data & Evidence">Clinical Data & Evidence</option>
+            <option value="Clinical Data & Evidence">
+              Clinical Data & Evidence
+            </option>
           </select>
 
           <select
             className="border border-gray-300 rounded-lg px-3 py-2 w-40 focus:ring-2 focus:ring-primary"
-            onChange={(e) => setFilters({ ...filters, difficulty: e.target.value })}
+            onChange={(e) =>
+              setFilters({ ...filters, difficulty: e.target.value })
+            }
           >
             <option value="All">All Difficulty</option>
             <option value="Easy">Easy</option>
@@ -158,8 +197,13 @@ export default function QuestionSelection() {
                   <p className="text-sm text-gray-700">{q.category}</p>
 
                   {/* Difficulty */}
-                  <p className={`text-sm font-semibold ${getDifficultyColor(q.difficulty)}`}>
-                    {q.difficulty?.charAt(0).toUpperCase() + q.difficulty?.slice(1)}
+                  <p
+                    className={`text-sm font-semibold ${getDifficultyColor(
+                      q.difficulty
+                    )}`}
+                  >
+                    {q.difficulty?.charAt(0).toUpperCase() +
+                      q.difficulty?.slice(1)}
                   </p>
 
                   {/* Persona Dropdown */}
@@ -167,7 +211,9 @@ export default function QuestionSelection() {
                     {personasByQuestion[q.id] &&
                     personasByQuestion[q.id].length > 0 ? (
                       <select
-                        value={selectedPersonas[q.id] || personasByQuestion[q.id][0]}
+                        value={
+                          selectedPersonas[q.id] || personasByQuestion[q.id][0]
+                        }
                         onChange={(e) =>
                           handlePersonaChange(q.id, e.target.value)
                         }
@@ -180,7 +226,9 @@ export default function QuestionSelection() {
                         ))}
                       </select>
                     ) : (
-                      <span className="text-xs text-gray-400 italic">No personas</span>
+                      <span className="text-xs text-gray-400 italic">
+                        No personas
+                      </span>
                     )}
                   </div>
 
@@ -193,11 +241,7 @@ export default function QuestionSelection() {
                   <div className="flex justify-center">
                     <button
                       className="bg-primary hover:bg-indigo text-white text-sm font-medium px-4 py-1.5 rounded-md shadow-sm transition-all"
-                      onClick={() =>
-                        alert(
-                          `Starting practice for "${q.question}" as ${selectedPersonas[q.id] || "N/A"}`
-                        )
-                      }
+                      onClick={() => handleStartPractice(q)}
                     >
                       Practice
                     </button>

@@ -13,14 +13,17 @@ export default function Dashboard() {
   const [dashboardData, setDashboardData] = useState(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
+  const [userName, setUserName] = useState("User");
 
-  const userName = "Ashmiya"; // later replace with decoded user name from JWT
+  
 
   useEffect(() => {
     const loadDashboard = async () => {
       try {
         const res = await fetchUserDashboard();
-        setDashboardData(res.progress);
+        setDashboardData(res.progress); 
+            
+        setUserName(res.progress.first_name+" "+res.progress.last_name);
       } catch (err) {
         setError(err.response?.data?.message || "Failed to load dashboard");
       } finally {

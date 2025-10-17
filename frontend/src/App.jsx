@@ -7,6 +7,7 @@ import ResetConfirmation from "./pages/ResetConfirmation";
 import ResetPassword from "./pages/ResetPassword";
 import Dashboard from "./pages/Dashboard";
 import QuestionSelection from "./pages/QuestionSelectionPage";
+import Session from "./pages/Session";
 
 function App() {
   return (
@@ -20,6 +21,7 @@ function App() {
         <Route path="/reset-password" element={<ResetPassword />} />
         <Route path="/dashboard" element={<Dashboard />} />
         <Route path="/questions" element={<QuestionSelection />} />
+        <Route path="/session/:sessionId" element={<Session />} />
       </Routes>
     </Router>
   );

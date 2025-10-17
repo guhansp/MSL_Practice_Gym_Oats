@@ -13,31 +13,34 @@ const router = express.Router();
 /**
  * Start conversation (first user turn)
  */
-router.post("/start", verifyToken, async (req, res) => {
+router.post("/:sessionId/chat", verifyToken, async (req, res) => {
   try {
-    const { sessionId, message } = req.body;
+    const { message } = req.body;
+    const { sessionId } = req.params;
     const userId = req.userId || req.user?.user_id || req.user?.userId;
 
     if (!userId)
       return res.status(401).json({ error: "Unauthorized (no userId)" });
+
     if (!sessionId || !message) {
       return res
         .status(400)
-        .json({ error: "Session ID and message are required" });
+        .json({ error: "Session ID (param) and message are required" });
     }
 
     const response = await generateCoachResponse(sessionId, userId, message);
 
     res.json({
       success: true,
-      aiResponse: response.message,
+      message: response.message,
       turnNumber: response.turnNumber,
     });
   } catch (error) {
-    console.error("Start conversation error:", error);
-    res
-      .status(500)
-      .json({ error: "Error starting conversation", details: error.message });
+    console.error("Chat message error:", error);
+    res.status(500).json({
+      error: "Error processing chat message",
+      details: error.message,
+    });
   }
 });
 
@@ -72,7 +75,7 @@ router.post("/continue", verifyToken, async (req, res) => {
   }
 });
 
-router.get("/:sessionId", verifyToken, async (req, res) => {
+router.get("/:sessionId/getConversationSummary", verifyToken, async (req, res) => {
   try {
     const { sessionId } = req.params;
     const userId = req.userId || req.user?.user_id || req.user?.userId;

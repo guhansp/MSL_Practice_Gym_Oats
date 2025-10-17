@@ -102,8 +102,9 @@ router.get("/",verifyToken, async (req, res) => {
 });
 
 
-router.get("/:id",verifyToken, async (req, res) => {
+router.get("/session/:id",verifyToken, async (req, res) => {
   try {
+    const userId = req.user.userId;
     const { id } = req.params;
 
     const result = await pool.query(
@@ -114,12 +115,16 @@ router.get("/:id",verifyToken, async (req, res) => {
          q.difficulty,
          q.context as question_context,
          p.name as persona_name,
-         p.specialty
+         p.specialty,
+         u.first_name as user_first_name,
+          u.last_name as user_last_name
+
        FROM practice_sessions ps
        JOIN questions q ON ps.question_id = q.id
        JOIN personas p ON ps.persona_id = p.id
+        JOIN users u ON ps.user_id = u.id
        WHERE ps.id = $1 AND ps.user_id = $2`,
-      [id, req.userId]
+      [id, userId]
     );
 
     if (result.rows.length === 0) {
@@ -182,20 +187,24 @@ router.patch("/:id/complete",verifyToken, async (req, res) => {
 });
 
 
-router.get("/stats", async (req, res) => {
+router.get("/statsall",verifyToken, async (req, res) => {
+ 
   try {
+    const userId = req.user.userId;
+    
     // Total sessions
     const totalResult = await pool.query(
       "SELECT COUNT(*) as total FROM practice_sessions WHERE user_id = $1",
-      [req.userId]
+      [userId]
     );
+   
 
     // Completed sessions
     const completedResult = await pool.query(
       `SELECT COUNT(*) as completed 
        FROM practice_sessions 
        WHERE user_id = $1 AND completed_at IS NOT NULL`,
-      [req.userId]
+      [userId]
     );
 
     // Average confidence
@@ -203,7 +212,7 @@ router.get("/stats", async (req, res) => {
       `SELECT AVG(confidence_rating)::numeric(10,2) as avg_confidence 
        FROM practice_sessions 
        WHERE user_id = $1 AND completed_at IS NOT NULL AND confidence_rating IS NOT NULL`,
-      [req.userId]
+      [userId]
     );
 
     // Category breakdown
