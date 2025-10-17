@@ -168,6 +168,20 @@ export default function Dashboard() {
           />
         </div>
 
+        {/* --- Explore Personas CTA --- */}
+        <div className="mb-10">
+          <button
+            onClick={() => navigate('/personas')}
+            className="w-full bg-gradient-to-r from-purple-600 to-purple-800 hover:from-purple-700 hover:to-purple-900 text-white font-medium px-8 py-4 rounded-xl shadow-md transition-all duration-300 flex items-center justify-center gap-3"
+          >
+            <span className="text-2xl">👨‍⚕️</span>
+            <span className="font-serif text-lg">Explore Physician Personas</span>
+            <span>→</span>
+          </button>
+        </div>
+
+        {/* --- Confidence Cards --- */}
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-5 gap-6 mb-12">
         {/* --- Persona Scores (Full Row Stretch) --- */}
         <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-3 gap-6 mb-12 w-full">
           {scores.map((item) => {

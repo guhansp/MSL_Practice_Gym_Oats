@@ -7,7 +7,8 @@ import ResetConfirmation from "./pages/ResetConfirmation";
 import ResetPassword from "./pages/ResetPassword";
 import Dashboard from "./pages/Dashboard";
 import QuestionSelection from "./pages/QuestionSelectionPage";
-
+import PersonasPage from "./pages/PersonasPage";
+import PersonaDetailPage from "./pages/PersonaDetailPage";
 function App() {
   return (
     <Router>
@@ -20,6 +21,8 @@ function App() {
         <Route path="/reset-password" element={<ResetPassword />} />
         <Route path="/dashboard" element={<Dashboard />} />
         <Route path="/questions" element={<QuestionSelection />} />
+        <Route path="/personas" element={<PersonasPage />} />
+        <Route path="/personas/:personaId" element={<PersonaDetailPage />} />
       </Routes>
     </Router>
   );
