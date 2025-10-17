@@ -14,7 +14,7 @@ router.get("/userData", verifyToken, async (req, res) => {
     );
 
     if (result.rows.length === 0)
-      return res.status(200).json({ message: "No progress data found" });
+      return res.status(204).json({ message: "No progress data found" });
 
     res.json({
       message: "Dashboard data loaded successfully",
