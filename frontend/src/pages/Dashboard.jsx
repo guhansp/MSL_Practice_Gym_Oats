@@ -1,4 +1,5 @@
 import React, { useEffect, useState } from "react";
+import { useNavigate } from "react-router-dom"; 
 import NavBar from "../components/NavBar";
 import {
   PieChart,
@@ -20,6 +21,7 @@ import { Flame } from "lucide-react";
 import { fetchUserDashboard, fetchUserSessions } from "../services/dashboardService";
 
 export default function Dashboard() {
+  const navigate = useNavigate(); 
   const [dashboardData, setDashboardData] = useState(null);
   const [recentSessions, setRecentSessions] = useState([]);
   const [loading, setLoading] = useState(true);
@@ -214,6 +216,31 @@ export default function Dashboard() {
         </div>
 
         {/* Persona Scores */}
+        {/* --- Explore Personas CTA --- */}
+        <div className="mb-10">
+          <div className="bg-white rounded-xl shadow-md p-6 border-l-4 border-primary">
+            <div className="flex items-start sm:items-center justify-between flex-col sm:flex-row gap-4">
+              <div className="flex-1">
+                <h3 className="font-serif text-lg sm:text-xl text-primary font-medium mb-2">
+                  Ready to Learn Physician Communication Styles?
+                </h3>
+                <p className="text-graphite text-xs sm:text-sm">
+                  Master the communication styles and priorities of oncologists, cardiologists, and neurologists
+                </p>
+              </div>
+              <button
+                onClick={() => navigate('/personas')}
+                className="w-full sm:w-auto bg-primary hover:bg-primary/90 text-white font-medium px-6 py-3 rounded-lg transition-colors duration-300 whitespace-nowrap"
+              >
+                Explore Now
+              </button>
+            </div>
+          </div>
+        </div>
+
+        {/* --- Confidence Cards --- */}
+        {/* <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-5 gap-6 mb-12"/> */}
+        {/* --- Persona Scores (Full Row Stretch) --- */}
         <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-3 gap-6 mb-12 w-full">
           {scores.map((item) => {
             const label =

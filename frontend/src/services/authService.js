@@ -20,9 +20,14 @@ export const getCurrentUser = async () => {
 
 // ---------- LOGOUT ----------
 export const logOut = async () => {
-  const res = await API.post("/auth/logout");
-  localStorage.removeItem("token");
-  return res.data;
+  try {
+    await API.post("/auth/logout");
+    localStorage.removeItem('token');
+  } catch (error) {
+    console.error("Error logging out:", error);
+    // Remove token anyway
+    localStorage.removeItem('token');
+  }
 };
 
 // ---------- VERIFY TOKEN ----------

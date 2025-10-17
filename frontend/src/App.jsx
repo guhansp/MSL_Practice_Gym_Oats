@@ -9,6 +9,9 @@ import Dashboard from "./pages/Dashboard";
 import QuestionSelection from "./pages/QuestionSelectionPage";
 import SampleResponses from "./pages/SampleResponses";
 
+import PersonasPage from "./pages/PersonasPage";
+import PersonaDetailPage from "./pages/PersonaDetailPage";
+import ProfilePage from "./pages/ProfilePage";
 function App() {
   return (
     <Router>
@@ -22,6 +25,9 @@ function App() {
         <Route path="/dashboard" element={<Dashboard />} />
         <Route path="/questions" element={<QuestionSelection />} />
          <Route path="/sample-answers" element={<SampleResponses />} />
+        <Route path="/personas" element={<PersonasPage />} />
+        <Route path="/personas/:personaId" element={<PersonaDetailPage />} />
+        <Route path="/profile" element={<ProfilePage />} />
       </Routes>
     </Router>
   );
