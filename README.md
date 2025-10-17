@@ -332,9 +332,9 @@ npm run preview
 ## 👥 Contributors
 
 - **DNATE Engineering Team**
-- Full Stack Developer — Frontend Architecture & API Integration
-- Backend Developer — Database & JWT Authentication
-- Product Designer — UI/UX & Brand Consistency
+- Ashmiya VijayaChandran
+- Thejus Thomson
+- Guhan Santhanam SP
 
 ## 📄 License
 
