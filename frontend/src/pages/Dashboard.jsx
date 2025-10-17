@@ -1,23 +1,60 @@
 import React from "react";
-import NavBar from "../components/NavBar";
+import NavBar from "./components/NavBar";
+import {
+  PieChart,
+  Pie,
+  Cell,
+  Tooltip,
+  ResponsiveContainer,
+} from "recharts";
 
-// Mock data for demonstration
 export default function Dashboard() {
-  const userName = "Thejus"; // Replace dynamically from auth context later
+  const userName = "Ashmiya";
+
+  const getColorClass = (score) => {
+    if (score < 50) return "text-red-600";
+    if (score < 75) return "text-yellow-600";
+    return "text-green-600";
+  };
+
+  const getChipColor = (score) => {
+    if (score < 50) return "bg-red-100 text-red-700";
+    if (score < 75) return "bg-yellow-100 text-yellow-700";
+    return "bg-green-100 text-green-700";
+  };
 
   const scores = [
-    { id: 1, title: "Presentation Skills", score: 45, color: "bg-red-100 text-red-700" },
-    { id: 2, title: "Scientific Writing", score: 65, color: "bg-yellow-100 text-yellow-700" },
-    { id: 3, title: "Team Communication", score: 80, color: "bg-green-100 text-green-700" },
-    { id: 4, title: "Confidence in Meetings", score: 72, color: "bg-yellow-100 text-yellow-700" },
-    { id: 5, title: "Public Speaking", score: 90, color: "bg-green-100 text-green-700" },
+    { id: 1, title: "Presentation Skills", score: 45 },
+    { id: 2, title: "Scientific Writing", score: 65 },
+    { id: 3, title: "Team Communication", score: 80 },
+    { id: 4, title: "Confidence in Meetings", score: 72 },
+    { id: 5, title: "Public Speaking", score: 90 },
   ];
 
-  // Simulated 30-day streak data
+  const totalSessions = 42;
+  const totalMinutes = 560;
+  const currentStreak = 7;
+
+ const confidenceData = [
+  { name: "Presentation", value: 45, color: "#0077E6" }, // Primary Blue
+  { name: "Writing", value: 65, color: "#00AEEF" }, // Sky Blue
+  { name: "Communication", value: 80, color: "#1B004B" }, // Deep Indigo
+  { name: "Meetings", value: 72, color: "#404A69" }, // Graphite
+  { name: "Public Speaking", value: 90, color: "#5AC8FA" }, // Lighter accent (optional)
+];
+
+  const recentSessions = [
+    { date: "Oct 14, 2025", topic: "Scientific Writing", score: 75 },
+    { date: "Oct 13, 2025", topic: "Presentation Skills", score: 82 },
+    { date: "Oct 12, 2025", topic: "Confidence in Meetings", score: 65 },
+    { date: "Oct 10, 2025", topic: "Public Speaking", score: 88 },
+    { date: "Oct 9, 2025", topic: "Team Communication", score: 71 },
+  ];
+
+  // --- Streak mock ---
   const streakData = Array.from({ length: 30 }, () =>
     Math.random() > 0.4 ? 1 : 0
   );
-
   const sessionsCompleted = streakData.filter((d) => d === 1).length;
   const longestStreak = Math.max(
     ...streakData
@@ -31,43 +68,127 @@ export default function Dashboard() {
       <NavBar />
 
       <section className="min-h-screen bg-grayAccent px-6 py-10 font-sans">
-        {/* --- Header --- */}
-        <h1 className="text-2xl md:text-3xl font-serif text-indigo font-medium mb-8">
+        {/* --- Welcome Header --- */}
+        <h1 className="text-2xl md:text-3xl font-serif text-indigo font-medium mb-10">
           Welcome, <span className="text-primary">{userName}</span>
         </h1>
 
-        {/* --- Confidence Score Cards --- */}
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-5 gap-6 mb-12">
-          {scores.map((item) => (
-            <div
-              key={item.id}
-              className={`rounded-xl p-6 shadow-md ${item.color} flex flex-col justify-between transition-transform hover:-translate-y-1`}
-            >
-              <div>
-                <h2 className="text-lg font-medium mb-2">{item.title}</h2>
-                <p className="text-4xl font-bold">{item.score}%</p>
-              </div>
-              <button className="mt-4 bg-primary hover:bg-indigo text-white px-4 py-2 rounded-lg font-medium transition-colors duration-300">
-                Practice Now
-              </button>
-            </div>
-          ))}
+        {/* --- Key Metrics Summary --- */}
+        <div className="grid grid-cols-1 sm:grid-cols-3 gap-6 mb-10">
+          <div className="bg-white rounded-xl shadow-md p-6 text-center">
+            <h3 className="text-sm text-graphite mb-2 font-medium">
+              Total Sessions Completed
+            </h3>
+            <p className="text-3xl font-bold text-primary">{totalSessions}</p>
+          </div>
+
+          <div className="bg-white rounded-xl shadow-md p-6 text-center">
+            <h3 className="text-sm text-graphite mb-2 font-medium">
+              Practice Time Logged
+            </h3>
+            <p className="text-3xl font-bold text-indigo">
+              {Math.floor(totalMinutes / 60)}h {totalMinutes % 60}m
+            </p>
+          </div>
+
+          <div className="bg-white rounded-xl shadow-md p-6 text-center">
+            <h3 className="text-sm text-graphite mb-2 font-medium">
+              Current Streak
+            </h3>
+            <p className="text-3xl font-bold text-green-600">
+              {currentStreak} Days 🔥
+            </p>
+          </div>
         </div>
 
-        {/* --- Streak + Heatmap Section --- */}
-        <div className="bg-white shadow-md rounded-2xl p-6 md:p-8 max-w-5xl mx-auto">
+        {/* --- Confidence Cards --- */}
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-5 gap-6 mb-12">
+          {scores.map((item) => {
+            const colorClass = getColorClass(item.score);
+            const chipClass = getChipColor(item.score);
+            const label =
+              item.score < 50 ? "Low" : item.score < 75 ? "Medium" : "High";
+
+            return (
+              <div
+                key={item.id}
+                className="rounded-xl p-6 shadow-md bg-white flex flex-col justify-between transition-transform hover:-translate-y-1"
+              >
+                <div className="flex justify-end mb-2">
+                  <div
+                    className={`px-3 py-1 text-xs font-semibold rounded-full ${chipClass}`}
+                  >
+                    {label}
+                  </div>
+                </div>
+
+                <h2 className="text-lg font-medium text-indigo mb-2">
+                  {item.title}
+                </h2>
+                <p className="text-sm font-bold">
+                  Confidence Score:{" "}
+                  <span className={`text-base ${colorClass}`}>
+                    {item.score}%
+                  </span>
+                </p>
+
+                <button className="mt-5 bg-primary hover:bg-indigo text-white px-4 py-2 rounded-lg font-medium text-sm transition-colors duration-300">
+                  Practice Now
+                </button>
+              </div>
+            );
+          })}
+        </div>
+
+        {/* --- Confidence by Category --- */}
+  <div className="bg-white rounded-2xl shadow-md p-6 md:p-8 mb-10">
+  <h2 className="font-serif text-xl md:text-2xl text-indigo font-medium mb-6">
+    Confidence by Category
+  </h2>
+
+  <div className="h-72">
+    <ResponsiveContainer width="100%" height="100%">
+      <PieChart>
+        <Pie
+          data={confidenceData}
+          dataKey="value"
+          nameKey="name"
+          innerRadius="50%"
+          outerRadius="80%"
+          label={({ name, value }) => `${name}: ${value}%`}
+          labelLine={false}
+        >
+          {confidenceData.map((entry, index) => (
+            <Cell key={`cell-${index}`} fill={entry.color} />
+          ))}
+        </Pie>
+        <Tooltip
+          contentStyle={{
+            backgroundColor: "#ffffff",
+            borderRadius: "10px",
+            border: "1px solid #E5E7EB",
+            color: "#1B004B",
+          }}
+        />
+      </PieChart>
+    </ResponsiveContainer>
+  </div>
+</div>
+
+
+        {/* --- Consistency + Heatmap --- */}
+        <div className="bg-white shadow-md rounded-2xl p-6 md:p-8 max-w-5xl mx-auto mb-10">
           <h2 className="font-serif text-xl md:text-2xl text-indigo font-medium mb-4">
             Your Consistency Streak
           </h2>
           <p className="text-graphite mb-6">
-            You’ve completed{" "}
+            You've completed{" "}
             <span className="font-semibold text-primary">{sessionsCompleted}</span>{" "}
-            sessions this month. Your longest streak is{" "}
+            sessions this month. Longest streak:{" "}
             <span className="font-semibold text-primary">{longestStreak}</span>{" "}
-            days in a row. Keep it up!
+            days in a row.
           </p>
 
-          {/* --- Heatmap --- */}
           <div className="flex flex-wrap gap-1">
             {streakData.map((day, i) => (
               <div
@@ -75,10 +196,40 @@ export default function Dashboard() {
                 className={`h-4 w-4 sm:h-5 sm:w-5 rounded-sm ${
                   day ? "bg-primary" : "bg-grayNeutral"
                 } transition-all duration-300 hover:scale-110`}
-                title={`Day ${i + 1}: ${day ? "Completed" : "Missed"}`}
+                title={`Day ${i + 1}: ${day ? "Practiced" : "Missed"}`}
               ></div>
             ))}
           </div>
+        </div>
+
+        {/* --- Recent Sessions --- */}
+        <div className="bg-white rounded-2xl shadow-md p-6 md:p-8 max-w-5xl mx-auto">
+          <h2 className="font-serif text-xl md:text-2xl text-indigo font-medium mb-6">
+            Recent Session History
+          </h2>
+          <table className="w-full text-left border-collapse">
+            <thead>
+              <tr className="text-gray-600 border-b">
+                <th className="pb-3 text-sm font-medium">Date</th>
+                <th className="pb-3 text-sm font-medium">Topic</th>
+                <th className="pb-3 text-sm font-medium">Confidence Score</th>
+              </tr>
+            </thead>
+            <tbody>
+              {recentSessions.map((session, idx) => (
+                <tr
+                  key={idx}
+                  className="border-b last:border-none hover:bg-gray-50 transition"
+                >
+                  <td className="py-3 text-sm">{session.date}</td>
+                  <td className="py-3 text-sm">{session.topic}</td>
+                  <td className="py-3 text-sm font-semibold text-indigo">
+                    {session.score}%
+                  </td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
         </div>
       </section>
     </>
