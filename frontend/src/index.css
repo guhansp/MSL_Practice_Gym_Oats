@@ -1,11 +1,9 @@
 @import url("https://fonts.googleapis.com/css2?family=Manrope:wght@400;500;600;700;800&family=Domine:wght@400;500;600;700&family=Space+Mono:wght@400;700&display=swap");
 
+@import url("https://fonts.googleapis.com/css2?family=Manrope:wght@400;500;600;700;800&family=Domine:wght@400;500;600;700&family=Space+Mono:wght@400;700&display=swap");
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
-
-@import url("https://fonts.googleapis.com/css2?family=Manrope:wght@400;500;600;700;800&family=Domine:wght@400;500;600;700&family=Space+Mono:wght@400;700&display=swap");
-
 body {
   @apply font-sans bg-grayLight text-graphite;
 }
