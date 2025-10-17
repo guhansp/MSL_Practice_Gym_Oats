@@ -192,6 +192,7 @@ router.post('/login', async (req, res) => {
 // GET CURRENT USER - Requires authentication
 // ==========================================
 router.get('/me', authenticate, async (req, res) => {
+  console.log('Fetching user info for userId:', req.user.userId);
   try {
     // req.userId comes from authenticate middleware
     const result = await pool.query(
@@ -208,7 +209,7 @@ router.get('/me', authenticate, async (req, res) => {
          email_verified
        FROM users 
        WHERE id = $1`,
-      [req.userId]
+      [req.user.userId]
     );
     
     if (result.rows.length === 0) {
