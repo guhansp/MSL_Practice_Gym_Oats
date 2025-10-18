@@ -27,6 +27,54 @@ DNATE MSL Practice Gym provides an AI-augmented, data-driven environment where M
 | **Styling** | Tailwind + Custom DNATE Theme |
 | **Package Manager** | npm |
 
+## 🚢 Deployment
+
+The application is deployed using the following infrastructure:
+
+| Component | Platform | Purpose |
+|-----------|----------|---------|
+| **Frontend** | Vercel | React application hosting |
+| **Backend** | Railway | Node.js API server |
+| **Database** | Supabase | PostgreSQL database |
+
+### Frontend (Vercel)
+
+1. Import repository to Vercel
+2. Framework: `Vite`
+3. Root directory: `frontend`
+4. Build command: `npm run build`
+5. Output directory: `dist`
+6. Environment variables:
+   ```
+   VITE_API_URL=https://<railway-backend-url>/api
+   ```
+7. Deploy from `main` branch
+
+### Backend (Railway)
+
+1. Deploy from GitHub repository
+2. Service root directory: `/backend`
+3. Node version: 18+
+4. Build command: `npm install`
+5. Start command: `npm start`
+6. Environment variables:
+   ```
+   PORT=5000
+   DATABASE_URL=<supabase-connection-string>
+   JWT_SECRET=<your-jwt-secret>
+   ```
+
+### Database (Supabase)
+
+1. Create new project in Supabase
+2. Copy connection string from project settings
+3. Run database migrations/schema setup
+4. Update `DATABASE_URL` in Railway backend environment
+5. Connection string format:
+   ```
+   postgresql://postgres:[PASSWORD]@[HOST]:5432/postgres
+   ```
+
 ## 📁 Folder Structure
 
 ```
