@@ -37,44 +37,6 @@ The application is deployed using the following infrastructure:
 | **Backend** | Railway | Node.js API server |
 | **Database** | Supabase | PostgreSQL database |
 
-### Frontend (Vercel)
-
-1. Import repository to Vercel
-2. Framework: `Vite`
-3. Root directory: `frontend`
-4. Build command: `npm run build`
-5. Output directory: `dist`
-6. Environment variables:
-   ```
-   VITE_API_URL=https://<railway-backend-url>/api
-   ```
-7. Deploy from `main` branch
-
-### Backend (Railway)
-
-1. Deploy from GitHub repository
-2. Service root directory: `/backend`
-3. Node version: 18+
-4. Build command: `npm install`
-5. Start command: `npm start`
-6. Environment variables:
-   ```
-   PORT=5000
-   DATABASE_URL=<supabase-connection-string>
-   JWT_SECRET=<your-jwt-secret>
-   ```
-
-### Database (Supabase)
-
-1. Create new project in Supabase
-2. Copy connection string from project settings
-3. Run database migrations/schema setup
-4. Update `DATABASE_URL` in Railway backend environment
-5. Connection string format:
-   ```
-   postgresql://postgres:[PASSWORD]@[HOST]:5432/postgres
-   ```
-
 ## 📁 Folder Structure
 
 ```
@@ -332,21 +294,24 @@ All components (NavBar, Cards, Metrics, Tables) follow DNATE's brand typography,
 5. Environment variables: `VITE_API_URL=https://<backend-host>/api`
 6. Deploy from `main` (or chosen branch)
 
-### Backend (Render or Railway)
-
-#### Render
-- Root: `/backend`
-- Node: 18+
-- Build: `npm install`
-- Start: `npm start`
-- Env: `PORT`, `DATABASE_URL`, `JWT_SECRET`
-- Add Managed PostgreSQL and set `DATABASE_URL`
+### Backend (Railway)
 
 #### Railway
 - Deploy from repo (service root `/backend`)
 - Env: `PORT`, `DATABASE_URL`, `JWT_SECRET`
 - Add PostgreSQL plugin and map to `DATABASE_URL`
 
+### Database (Supabase)
+
+1. Create new project in Supabase
+2. Copy connection string from project settings
+3. Run database migrations/schema setup
+4. Update `DATABASE_URL` in Railway backend environment
+5. Connection string format:
+   ```
+   postgresql://postgres:[PASSWORD]@[HOST]:5432/postgres
+   ```
+   
 ### CORS & Health Check
 ```javascript
 // server.js
